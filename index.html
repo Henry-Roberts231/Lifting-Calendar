@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henry's Training Program</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
+  --text: #1a1a18; --text2: #5a5a56; --text3: #8a8a84;
+  --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+  --accent: #1a9e6e; --accent2: #e07b2a; --accent3: #4a7fd4;
+  --danger: #c94040;
+  --radius-md: 8px; --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#1c1c1a; --bg2:#252523; --bg3:#2e2e2b; --text:#e8e6de; --text2:#9a9890; --text3:#6a6860; --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.18); }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+.wrap { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.app-header h1 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.app-header p { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; }
+.month-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+.month-tab { padding: 8px 20px; border-radius: var(--radius-md); border: 1px solid var(--border2); font-size: 14px; font-weight: 500; cursor: pointer; background: var(--bg2); color: var(--text2); transition: all 0.15s; font-family: inherit; }
+.month-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.week-tabs { display: flex; gap: 6px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.week-tab { padding: 6px 14px; border-radius: var(--radius-md); border: 1px solid var(--border2); font-size: 13px; cursor: pointer; background: var(--bg2); color: var(--text2); transition: all 0.15s; font-family: inherit; }
+.week-tab.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.week-note { padding: 10px 14px; background: var(--bg2); border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 13px; color: var(--text2); border-left: 3px solid var(--accent2); line-height: 1.6; }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.day-grid { display: flex; flex-direction: column; gap: 8px; }
+.day-card { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
+.day-header { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+.day-header:hover { background: var(--bg2); }
+.day-header-left { display: flex; align-items: center; gap: 10px; }
+.day-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.pill-lower { background: #e8f5ee; color: #1a7a50; }
+.pill-upper { background: #e8f0fa; color: #2a5aaa; }
+.pill-rest { background: var(--bg2); color: var(--text3); border: 1px solid var(--border); }
+@media (prefers-color-scheme: dark) {
+  .pill-lower { background:#0e3d28; color:#5ecb96; }
+  .pill-upper { background:#0e2040; color:#7aaaf0; }
+}
+.day-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.day-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.day-meta { display: flex; align-items: center; gap: 8px; }
+.time-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg2); color: var(--text3); border: 1px solid var(--border); white-space: nowrap; }
+.time-badge.longer { background: #fdf0e0; color: #a06010; border-color: #f0c070; }
+.chevron { font-size: 11px; color: var(--text3); transition: transform 0.2s; }
+.chevron.open { transform: rotate(180deg); }
+.day-body { display: none; border-top: 1px solid var(--border); }
+.day-body.open { display: block; }
+.section-label { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 14px 4px; }
+.superset-group { border-left: 3px solid #c07af0; margin-left: 14px; }
+.superset-group .exercise-row { padding-left: 10px; }
+.exercise-row { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+.exercise-row:last-child { border-bottom: none; }
+.ex-top { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.ex-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.ex-note { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+.ex-tags { margin-top: 3px; }
+.ex-badge { text-align: right; }
+.ex-sets-label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+.ex-weight-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-top: 4px; display: inline-block; font-weight: 500; }
+.w-heavy { background: #fde8e8; color: #993030; }
+.w-medium { background: #fdf0e0; color: #a06010; }
+.w-light { background: #e8f5ee; color: #1a7a50; }
+.w-bw { background: var(--bg2); color: var(--text3); }
+.w-iso { background: #f5e8fa; color: #7a2aaa; }
+@media (prefers-color-scheme: dark) {
+  .w-heavy { background:#3d1010; color:#f08080; }
+  .w-medium { background:#3d2a08; color:#f0a850; }
+  .w-light { background:#0e3020; color:#60c090; }
+  .w-iso { background:#2d1040; color:#c080f0; }
+}
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; display: inline-block; margin-right: 3px; font-weight: 500; }
+.tag-outside { color: #185fa5; background: #e6f1fb; }
+.tag-superset { color: #7a2aaa; background: #f5e8fa; }
+.tag-core { color: #1a7a50; background: #e8f5ee; }
+.tag-morning { color: #185fa5; background: #e0ecfa; }
+.tag-pap { color: #a06010; background: #fdf0e0; }
+@media (prefers-color-scheme: dark) {
+  .tag-outside { background:#0c2a40; color:#70b0f0; }
+  .tag-superset { background:#2d1040; color:#c080f0; }
+  .tag-core { background:#0e3020; color:#60c090; }
+}
+.log-area { margin-top: 8px; }
+.log-entries { margin-bottom: 6px; }
+.log-entry { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: var(--bg2); border-radius: var(--radius-md); margin-bottom: 4px; font-size: 12px; }
+.log-entry-text { color: var(--text); font-weight: 500; flex: 1; }
+.log-entry-date { font-size: 11px; color: var(--text3); margin: 0 8px; white-space: nowrap; }
+.log-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 15px; padding: 0 2px; line-height: 1; font-family: inherit; flex-shrink: 0; }
+.log-delete:hover { opacity: 0.7; }
+.log-toggle-btn { font-size: 11px; color: var(--accent3); cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; margin-top: 4px; display: inline-block; }
+.log-form { margin-top: 6px; background: var(--bg2); border-radius: var(--radius-md); padding: 8px 10px; }
+.log-form-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.log-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.log-field { display: flex; flex-direction: column; gap: 3px; }
+.log-field label { font-size: 11px; color: var(--text3); }
+.log-field input, .log-field textarea { padding: 6px 8px; border-radius: var(--radius-md); border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; }
+.log-field input:focus, .log-field textarea:focus { outline: none; border-color: var(--accent); }
+.log-field.full { grid-column: 1 / -1; }
+.log-field textarea { resize: none; height: 52px; font-size: 12px; }
+.log-actions { display: flex; gap: 8px; }
+.log-save-btn { padding: 6px 16px; border-radius: var(--radius-md); border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.log-save-btn:hover { opacity: 0.85; }
+.log-cancel-btn { padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border2); background: none; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; }
+.core-block { background: var(--bg2); margin: 8px 14px; border-radius: var(--radius-md); padding: 8px 10px; }
+.core-block-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.core-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.core-row:last-child { border-bottom: none; }
+.core-row-name { color: var(--text); font-weight: 500; }
+.core-row-sets { color: var(--text2); }
+.pap-box { background: #fdf5e0; border-left: 3px solid #e07b2a; border-radius: var(--radius-md); margin: 8px 14px; padding: 8px 12px; font-size: 12px; color: #7a4810; line-height: 1.5; }
+@media (prefers-color-scheme: dark) { .pap-box { background: #2a1e08; color: #f0b060; } }
+.pap-box strong { font-weight: 600; }
+footer { margin-top: 3rem; text-align: center; font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="app-header">
+    <h1>Henry's Training Program</h1>
+    <p>THP-inspired vertical &amp; mass · Month 2: overhead tricep extension · upper chest cable flye · back stretch protocol · PAP from W1 · Tap any exercise to log</p>
+  </div>
+  <div class="month-tabs">
+    <button class="month-tab active" onclick="setMonth(1)">Month 1</button>
+    <button class="month-tab" onclick="setMonth(2)">Month 2</button>
+  </div>
+  <div class="week-tabs" id="week-tabs"></div>
+  <div id="week-note" class="week-note"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#c07af0"></div>Superset</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#185fa5"></div>Outside gym</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a9e6e"></div>Core (do anytime)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e07b2a"></div>PAP primer</div>
+  </div>
+  <div class="day-grid" id="day-grid"></div>
+  <footer>Log your weights · Test your vertical every deload week</footer>
+</div>
+<script>
+const months = {
+
+// ─── MONTH 1 — ORIGINAL, UNCHANGED ───────────────────────────────────────────
+1: {
+  1: {
+    note:"Week 1 — Foundation. Lifts ordered by priority — if time runs out you've hit what matters most. Core blocks can be done anytime.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Body",subtitle:"Power Clean + Calf + Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold — Wall Sit",sets:"4 x 45 sec",weight:"iso",note:"Pain-free angles only.",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",note:"Toe touch, deep squat, long lunge, leg swings, pigeon",tags:["outside"]}
+        ]},
+        {title:"Main Lifts — priority order",exercises:[
+          {name:"Power Clean",sets:"5 x 3",weight:"light",note:"Technique focus. Bar speed > weight. Film if possible."},
+          {name:"Seated Calf Raise",sets:"3 x 12",weight:"medium",note:"Full range. Pause at bottom."},
+          {name:"Barbell Back Squat",sets:"4 x 6",weight:"medium",note:"~185–195 lbs. 3 sec eccentric. Stop if sharp knee pain."},
+          {name:"Romanian Deadlift",sets:"3 x 8",weight:"medium",note:"Hamstring stretch at bottom. Brace hard."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Plank",sets:"3 x 30 sec"},
+          {name:"Dead Bug",sets:"2 x 10 each"},
+          {name:"Flutter Kick",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Chest + Back + Shoulders — longer day",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",note:"40 sec each — chest hang, cobra, downward dog, butterfly, calf stretch",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 8",weight:"medium",note:"Priority 1. Controlled descent. Full lockout."},
+          {name:"Barbell Row",sets:"4 x 8",weight:"medium",note:"Priority 2. Retract scapula. Brace core."}
+        ]},
+        {title:"Superset — back + shoulders",isSuperset:true,exercises:[
+          {name:"Lat Pulldown or Pull-Up",sets:"3 x 8",weight:"medium",note:"Full stretch at top.",tags:["superset"]},
+          {name:"Dumbbell Lateral Raise",sets:"3 x 12",weight:"light",note:"Slight forward lean.",tags:["superset"]}
+        ]},
+        {title:"Superset — chest accessory + rear delt",isSuperset:true,exercises:[
+          {name:"Dumbbell Incline Press",sets:"3 x 10",weight:"medium",note:"Not pre-fatigued — push it.",tags:["superset"]},
+          {name:"Cable or DB Face Pull",sets:"3 x 15",weight:"light",note:"External rotation at end.",tags:["superset"]}
+        ]},
+        {title:"Arms",exercises:[
+          {name:"Hammer Curl",sets:"2 x 12",weight:"light",note:"Arm swing strength."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 12"},
+          {name:"L-Over",sets:"2 x 12"},
+          {name:"Crunch w/ Twist",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"OHP + Arms · Evening court session",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw",note:"Trunk twist, hip circle, eagles, hurdle rollback, leg swing, arm circles"}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 8",weight:"medium",note:"Full lockout. Don't lean back."},
+          {name:"Weighted Dip",sets:"3 x 8",weight:"medium",note:"Slight forward lean. Full depth."},
+          {name:"Barbell or DB Curl",sets:"3 x 10",weight:"medium",note:"Full range. Slow eccentric."},
+          {name:"Tricep Pushdown",sets:"3 x 10",weight:"light",note:"Elbows at sides."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"3 x 12 each"},
+          {name:"Back Hyper w/ Twist",sets:"2 x 12"}
+        ]},
+        {title:"Evening Court Session (separate)",exercises:[
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["outside"]},
+          {name:"Approach Jump Practice",sets:"15–20 attempts",weight:"bw",note:"Max intent. 60–90 sec rest.",tags:["outside"]},
+          {name:"Two-Foot Box Jump (24\")",sets:"4 x 4",weight:"bw",note:"Stick landing. Full reset.",tags:["outside"]},
+          {name:"Ankle Pogo Hops",sets:"3 x 20",weight:"bw",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Body",subtitle:"Snatch High Pull + Front Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",note:"Single leg if double was pain-free.",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Snatch High Pull",sets:"5 x 4",weight:"light",note:"Triple extension. Bar stays close. Explosive."},
+          {name:"Smith Machine Calf Raise",sets:"3 x 12",weight:"medium",note:"Pause top and bottom."},
+          {name:"Front Squat",sets:"4 x 8",weight:"medium",note:"~115–135 lbs. Upright torso."},
+          {name:"Nordic Hamstring Curl",sets:"3 x 5",weight:"bw",note:"Lower as slow as possible."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Supine Hip Extension",sets:"3 x 12"},
+          {name:"Dead Bug",sets:"2 x 10 each"},
+          {name:"Double Leg Slide",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Chest + Back heavy — longer day",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 6",weight:"medium",note:"Slightly heavier than Tuesday."},
+          {name:"Barbell Row",sets:"4 x 6",weight:"medium",note:"Match bench intensity."}
+        ]},
+        {title:"Superset — arms",isSuperset:true,exercises:[
+          {name:"Barbell or DB Curl",sets:"3 x 10",weight:"medium",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"3 x 12",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset — shoulder health",isSuperset:true,exercises:[
+          {name:"Dumbbell Lateral Raise",sets:"3 x 12",weight:"light",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Non-negotiable.",tags:["superset"]}
+        ]},
+        {title:"Chest + Arms accessory",exercises:[
+          {name:"Dumbbell Incline Press",sets:"2 x 10",weight:"medium"},
+          {name:"Hammer Curl",sets:"2 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 15"},
+          {name:"Wrestler Bridge",sets:"2 x 12"},
+          {name:"L-Up to Hip Lift",sets:"3 x 10"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Optional mobility",time:"—",sections:[
+        {title:"Optional",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"2–3 x 45 sec",weight:"iso",note:"Every 6 hrs if knees sore.",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"CNS recovery. Sleep 8–9 hrs."}]}
+      ]}
+    ]
+  },
+  2: {
+    note:"Week 2 — Add 5–10 lbs to main lifts where Week 1 felt manageable. Increase approach jump attempts to 20–25.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Body",subtitle:"Load increase",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Power Clean",sets:"6 x 3",weight:"medium",note:"Add 5–10 lbs. Bar speed still priority."},
+          {name:"Seated Calf Raise",sets:"4 x 12",weight:"medium"},
+          {name:"Barbell Back Squat",sets:"4 x 6",weight:"medium",note:"~195–205 lbs."},
+          {name:"RDL",sets:"4 x 8",weight:"medium",note:"Add 10 lbs from Week 1."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Plank",sets:"3 x 40 sec"},
+          {name:"Dead Bug",sets:"3 x 10 each"},
+          {name:"Flutter Kick",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Chest + Back — volume up",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 8",weight:"medium",note:"Add 5–10 lbs."},
+          {name:"Barbell Row",sets:"4 x 8",weight:"medium",note:"Add 5 lbs."}
+        ]},
+        {title:"Superset — back + shoulders",isSuperset:true,exercises:[
+          {name:"Pull-Up or Lat Pulldown",sets:"4 x 8",weight:"medium",note:"4 sets now.",tags:["superset"]},
+          {name:"Dumbbell Lateral Raise",sets:"3 x 12",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset — chest + rear delt",isSuperset:true,exercises:[
+          {name:"Dumbbell Incline Press",sets:"3 x 10",weight:"medium",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Arms",exercises:[{name:"Hammer Curl",sets:"2 x 12",weight:"light"}]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 12"},
+          {name:"Chinnies",sets:"3 x 12"},
+          {name:"Crunch w/ Twist",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"OHP + Arms · Evening court",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 8",weight:"medium",note:"Add 5 lbs."},
+          {name:"Weighted Dip",sets:"4 x 8",weight:"medium",note:"4 sets."},
+          {name:"Barbell Curl",sets:"3 x 10",weight:"medium"},
+          {name:"Tricep Pushdown",sets:"3 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"3 x 12 each"},
+          {name:"Back Hyper w/ Twist",sets:"3 x 12"}
+        ]},
+        {title:"Evening Court Session",exercises:[
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["outside"]},
+          {name:"Approach Jump Practice",sets:"20–25 attempts",weight:"bw",note:"Penultimate step focus.",tags:["outside"]},
+          {name:"Two-Foot Box Jump (24–28\")",sets:"4 x 5",weight:"bw",tags:["outside"]},
+          {name:"Broad Jump",sets:"4 x 4",weight:"bw",tags:["outside"]},
+          {name:"Ankle Pogo Hops",sets:"3 x 25",weight:"bw",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Body",subtitle:"Clean Pull + Volume",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Clean Pull",sets:"6 x 3",weight:"medium",note:"Triple extension + shrug."},
+          {name:"Smith Machine Calf Raise",sets:"3 x 10 each",weight:"medium"},
+          {name:"Barbell Back Squat",sets:"5 x 5",weight:"medium",note:"~205–215 lbs."},
+          {name:"Nordic Hamstring Curl",sets:"3 x 5",weight:"bw",note:"2-sec pause at bottom."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Supine Hip Extension",sets:"3 x 12"},
+          {name:"L-Up to Hip Lift",sets:"3 x 10"},
+          {name:"Double Leg Slide",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Heavy Bench + Back — longer day",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 6",weight:"medium",note:"Heavier than Tuesday."},
+          {name:"Barbell Row",sets:"4 x 6",weight:"medium"}
+        ]},
+        {title:"Superset — arms",isSuperset:true,exercises:[
+          {name:"Barbell Curl",sets:"3 x 10",weight:"medium",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"3 x 12",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset — shoulder health",isSuperset:true,exercises:[
+          {name:"Dumbbell Lateral Raise",sets:"3 x 12",weight:"light",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Chest + Arms accessory",exercises:[
+          {name:"Dumbbell Incline Press",sets:"2 x 10",weight:"medium"},
+          {name:"Hammer Curl",sets:"2 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 15"},
+          {name:"Wrestler Bridge",sets:"2 x 12"},
+          {name:"Side Up",sets:"3 x 12 each"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Optional mobility",time:"—",sections:[
+        {title:"Optional",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"2–3 x 45 sec",weight:"iso",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Recovery is the adaptation."}]}
+      ]}
+    ]
+  },
+  3: {
+    note:"Week 3 — Intensity spike. Heaviest week of Month 1. Court jumps peak at 25–30 attempts. Rest hard this weekend.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Body",subtitle:"Heavy Power Clean + Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Power Clean",sets:"6 x 3",weight:"heavy",note:"Heaviest yet. Must still look fast."},
+          {name:"Seated Calf Raise",sets:"4 x 12",weight:"medium"},
+          {name:"Barbell Back Squat",sets:"4 x 6",weight:"heavy",note:"~215–225 lbs."},
+          {name:"RDL",sets:"4 x 6",weight:"heavy",note:"Drop reps, increase load."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Weighted Plank",sets:"3 x 30 sec"},
+          {name:"Dead Bug",sets:"3 x 10 each"},
+          {name:"Flutter Kick",sets:"4 x 15"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Heavy Chest + Back",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 6",weight:"heavy",note:"Drop reps, increase load."},
+          {name:"Barbell Row",sets:"4 x 6",weight:"heavy"}
+        ]},
+        {title:"Superset — back + shoulders",isSuperset:true,exercises:[
+          {name:"Weighted Pull-Up",sets:"4 x 6",weight:"medium",note:"Add 10–25 lbs.",tags:["superset"]},
+          {name:"Dumbbell Lateral Raise",sets:"4 x 12",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset — chest + rear delt",isSuperset:true,exercises:[
+          {name:"Dumbbell Incline Press",sets:"4 x 8",weight:"medium",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Arms",exercises:[{name:"Hammer Curl",sets:"3 x 10",weight:"light"}]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 15"},
+          {name:"Chinnies",sets:"3 x 15"},
+          {name:"Wrestler Bridge",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"Heavy OHP + Arms · Peak court",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 6",weight:"heavy",note:"Drop to 6 reps, increase load."},
+          {name:"Weighted Dip",sets:"4 x 6",weight:"heavy"},
+          {name:"Barbell Curl",sets:"4 x 8",weight:"medium"},
+          {name:"Tricep Pushdown",sets:"4 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"3 x 15 each"},
+          {name:"Back Hyper w/ Twist",sets:"3 x 15"}
+        ]},
+        {title:"Peak Court Session",exercises:[
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["outside"]},
+          {name:"Approach Jump Practice",sets:"25–30 attempts",weight:"bw",note:"Max intent. Mix 1-foot and 2-foot.",tags:["outside"]},
+          {name:"Depth Jump (12\" box)",sets:"4 x 5",weight:"bw",note:"Step off, land, explode immediately.",tags:["outside"]},
+          {name:"Single-Leg Bound (L&R)",sets:"3 x 5 each",weight:"bw",tags:["outside"]},
+          {name:"Ankle Pogo Hops",sets:"4 x 25",weight:"bw",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Body",subtitle:"Heavy Clean Pull + Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Clean Pull",sets:"6 x 3",weight:"heavy",note:"Bar at hip height each rep."},
+          {name:"Smith Machine Calf Raise",sets:"4 x 8 each",weight:"heavy"},
+          {name:"Barbell Back Squat",sets:"5 x 5",weight:"heavy",note:"~215–225 lbs."},
+          {name:"Nordic Hamstring Curl",sets:"4 x 5",weight:"bw"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Supine Hip Extension",sets:"4 x 12"},
+          {name:"L-Up to Hip Lift",sets:"3 x 12"},
+          {name:"Double Leg Slide",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Heaviest compound week — longer",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 5",weight:"heavy",note:"Heaviest bench of Month 1."},
+          {name:"Barbell Row",sets:"4 x 5",weight:"heavy"}
+        ]},
+        {title:"Superset — arms heavy",isSuperset:true,exercises:[
+          {name:"Barbell Curl",sets:"4 x 8",weight:"medium",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"4 x 10",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset — shoulder health",isSuperset:true,exercises:[
+          {name:"Dumbbell Lateral Raise",sets:"4 x 12",weight:"light",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Chest + Arms accessory",exercises:[
+          {name:"Dumbbell Incline Press",sets:"3 x 8",weight:"medium"},
+          {name:"Hammer Curl",sets:"3 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"3 x 15"},
+          {name:"Crunch w/ Twist",sets:"3 x 15"},
+          {name:"Side Up",sets:"3 x 15 each"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Critical — hardest week",time:"—",sections:[
+        {title:"Do this",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 full round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"Every 6 hrs if knees sore",weight:"iso",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Week 3 is the hardest. Mandatory rest."}]}
+      ]}
+    ]
+  },
+  4: {
+    note:"Week 4 — Deload. Volume drops ~30%. Weights back to Week 1–2 level. Test your vertical Friday — wall method: standing reach vs jump reach.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Body",subtitle:"Deload",time:"40 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"3 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Power Clean",sets:"4 x 3",weight:"medium",note:"Back to Week 1 weight. Perfect mechanics."},
+          {name:"Seated Calf Raise",sets:"2 x 12",weight:"light"},
+          {name:"Barbell Back Squat",sets:"3 x 5",weight:"medium",note:"~185–195 lbs. Easy."},
+          {name:"RDL",sets:"3 x 6",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Plank",sets:"2 x 30 sec"},
+          {name:"Dead Bug",sets:"2 x 8 each"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Deload",time:"45-50 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Barbell Bench Press",sets:"3 x 6",weight:"medium"},
+          {name:"Barbell Row",sets:"3 x 6",weight:"medium"}
+        ]},
+        {title:"Superset",isSuperset:true,exercises:[
+          {name:"Pull-Up or Lat Pulldown",sets:"3 x 6",weight:"medium",tags:["superset"]},
+          {name:"Dumbbell Lateral Raise",sets:"2 x 12",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset",isSuperset:true,exercises:[
+          {name:"Dumbbell Incline Press",sets:"2 x 8",weight:"light",tags:["superset"]},
+          {name:"Face Pull",sets:"2 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Arms",exercises:[{name:"Hammer Curl",sets:"2 x 10",weight:"light"}]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"2 x 10"},
+          {name:"L-Over",sets:"2 x 10"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"Deload OHP · Light court",time:"40 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Overhead Press",sets:"3 x 6",weight:"medium"},
+          {name:"Weighted Dip",sets:"3 x 6",weight:"medium"},
+          {name:"Barbell Curl",sets:"2 x 10",weight:"light"},
+          {name:"Tricep Pushdown",sets:"2 x 10",weight:"light"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"2 x 10 each"},
+          {name:"Back Hyper w/ Twist",sets:"2 x 10"}
+        ]},
+        {title:"Light Court Session",exercises:[
+          {name:"Sprint Drills",sets:"1 x 20m",weight:"bw",tags:["outside"]},
+          {name:"Approach Jump Practice",sets:"12–15 attempts",weight:"bw",note:"Feel the pop. No grinding.",tags:["outside"]},
+          {name:"Two-Foot Box Jump",sets:"3 x 4",weight:"bw",tags:["outside"]},
+          {name:"Ankle Pogo Hops",sets:"2 x 20",weight:"bw",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Body",subtitle:"Deload",time:"40 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"3 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Clean Pull",sets:"4 x 3",weight:"medium",note:"Light and snappy."},
+          {name:"Calf Raise",sets:"2 x 12",weight:"light"},
+          {name:"Barbell Back Squat",sets:"3 x 5",weight:"medium"},
+          {name:"Nordic Hamstring Curl",sets:"2 x 5",weight:"bw"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Flutter Kick",sets:"2 x 12"},
+          {name:"Supine Hip Extension",sets:"2 x 10"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C + Vertical Test",subtitle:"Deload + test day",time:"50-60 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts (short)",exercises:[
+          {name:"Barbell Bench Press",sets:"3 x 5",weight:"medium"},
+          {name:"Barbell Row",sets:"3 x 5",weight:"medium"}
+        ]},
+        {title:"Superset",isSuperset:true,exercises:[
+          {name:"Barbell Curl",sets:"2 x 10",weight:"light",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"2 x 10",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Superset",isSuperset:true,exercises:[
+          {name:"Dumbbell Lateral Raise",sets:"2 x 12",weight:"light",tags:["superset"]},
+          {name:"Face Pull",sets:"2 x 15",weight:"light",tags:["superset"]}
+        ]},
+        {title:"Vertical Jump Test",exercises:[
+          {name:"Dynamic warm-up + approach jumps",sets:"10 min",weight:"bw",note:"Prime the system before testing.",tags:["outside"]},
+          {name:"Max vertical test — wall method",sets:"5–8 attempts",weight:"bw",note:"Standing reach vs jump reach. Record your best.",tags:["outside"]}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"V-Up",sets:"2 x 12"},
+          {name:"Plank",sets:"2 x 30 sec"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Optional",exercises:[{name:"Light walk or stretch",sets:"—",weight:"bw"}]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Month 1 done. Record your result. Month 2 starts tomorrow."}]}
+      ]}
+    ]
+  }
+},
+
+// ─── MONTH 2 — OVERHAULED ─────────────────────────────────────────────────────
+// Changes from Month 1:
+// 1. RIR arc programmed into every week note (W1: 3-4 RIR → W3: 0-1 RIR)
+// 2. Arms absorbed into tri-sets on Tuesday and Friday — always get done, no extra time
+// 3. Set count progressions: lateral raises 3→4→4, arm work 3→4→4 sets across the month
+// 4. Hang clean on Thursdays replaces snatch high pull
+// 5. Incline press PRIMARY on Fridays — bench accessory
+// 6. PAP from Week 1 at full working weight
+// 7. Depth jump progression: 12" W1-W2, 18" W3
+2: {
+  1: {
+    note:"Month 2 Week 1 — RIR GUIDE: This month runs an intentional intensity arc. W1: accessories at 3–4 RIR — you could do 3–4 more reps. This feels too easy. That's correct. W2: 2–3 RIR. W3: 0–1 RIR, you genuinely cannot do another rep. W4 deload: 4–5 RIR, never to failure. The arc is what makes Week 3 actually work — going hard in W1 burns you out before the peak. Arms are now embedded in both tri-sets on Tuesdays and Fridays — they always get done, no extra time.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Power A",subtitle:"Power Clean + Squat + Calves",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",note:"Single leg where possible.",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts — priority order",exercises:[
+          {name:"Power Clean",sets:"5 x 3",weight:"heavy",note:"Heavier than M1W3. Bar must still look fast."},
+          {name:"Barbell Back Squat",sets:"4 x 5",weight:"heavy",note:"~235–245 lbs. You're at ~1.48× BW — heavy squats now directly potentiate jump height through PAP."},
+          {name:"Seated Calf Raise",sets:"4 x 10",weight:"heavy",note:"Heavier than Month 1. Heavy calf work = stiffer tendons = more elastic energy stored per jump."},
+          {name:"Romanian Deadlift",sets:"3 x 6",weight:"heavy",note:"3–4 RIR this week. Controlled descent."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 12",note:"Squeeze hard at top. Slow lowering."},
+          {name:"Reverse Crunch",sets:"3 x 15",note:"Hip tilt at the top hits lower abs."},
+          {name:"Plank",sets:"3 x 40 sec"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Bench + Back — tri-sets absorb arms",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 5",weight:"heavy",note:"3–4 RIR this week. Lower reps = more load than Month 1."},
+          {name:"Barbell Row",sets:"4 x 5",weight:"heavy",note:"3–4 RIR. Row to lower sternum."}
+        ]},
+        {title:"Tri-set 1 — pull + delts + bicep",isSuperset:true,exercises:[
+          {name:"Weighted Pull-Up",sets:"3 x 5",weight:"medium",note:"Run all 3 exercises back-to-back, 60 sec rest between rounds. Arms are embedded here — zero extra time.",tags:["superset"]},
+          {name:"DB Lateral Raise",sets:"3 x 12",weight:"light",note:"3 sets W1. Progresses to 4 sets W2–W3. This is how width gets built — weekly set accumulation.",tags:["superset"]},
+          {name:"Incline DB Curl",sets:"3 x 10",weight:"medium",note:"Full stretch at bottom = superior hypertrophy stimulus. Incline eliminates momentum and maximises loaded stretch. 3–4 RIR.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — incline + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Incline Press",sets:"3 x 10",weight:"medium",note:"Incline moves to PRIMARY on Fridays. More accessory volume here Tuesday.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Non-negotiable. Rear delt and shoulder health.",tags:["superset"]},
+          {name:"Cable Overhead Extension",sets:"3 x 12",weight:"medium",note:"Arms overhead = long head (largest tricep head) under full stretch. Superior to pushdowns for size. 3–4 RIR.",tags:["superset"]}
+        ]},
+        {title:"Back finishing isolation",exercises:[
+          {name:"Straight-Arm Cable Pulldown",sets:"2 x 15",weight:"light",note:"Isolates lats with zero bicep involvement. Full stretch at top, contract at bottom. Near failure on last set. Back soreness protocol."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 12"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"V-Up",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"OHP + Arms · Morning PAP Court",time:"40-45 min",sections:[
+        {title:"Morning Court Session — PAP Protocol",isPapSection:true,exercises:[
+          {name:"PAP Primer — Back Squat",sets:"3 x 3",weight:"heavy",note:"~225–235 lbs (85–90% of your ~270 estimated 1RM). Rest exactly 4–6 min before approaching.",tags:["morning","pap"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["morning","outside"]},
+          {name:"Approach Jump Practice",sets:"15–20 attempts",weight:"bw",note:"Technical focus W1: arm timing. Both arms punch upward the instant the block foot contacts the ground. Arms contribute 15–28% of jump height.",tags:["morning","outside"]},
+          {name:"Depth Jump (12\" box)",sets:"4 x 5",weight:"bw",note:"Step off, land, explode immediately. Short ground contact is the metric.",tags:["morning","outside"]},
+          {name:"Two-Foot Box Jump (28\")",sets:"4 x 4",weight:"bw",tags:["morning","outside"]},
+          {name:"Ankle Pogo Hops",sets:"3 x 20",weight:"bw",tags:["morning","outside"]}
+        ]},
+        {title:"1:45 Lift — Warm-up",exercises:[
+          {name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 5",weight:"heavy",note:"3–4 RIR. Lower reps, heavier load this month."},
+          {name:"Weighted Dip",sets:"4 x 5",weight:"heavy",note:"3–4 RIR. Slight forward lean."}
+        ]},
+        {title:"Superset — arms",isSuperset:true,exercises:[
+          {name:"Barbell or DB Curl",sets:"3 x 10",weight:"medium",note:"3–4 RIR. Full ROM.",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"3 x 10",weight:"medium",note:"3–4 RIR.",tags:["superset"]}
+        ]},
+        {title:"Shoulder width",exercises:[
+          {name:"DB Lateral Raise",sets:"3 x 12",weight:"light",note:"3 sets W1. Third upper session hitting lateral delts this week."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"3 x 15 each"},
+          {name:"Back Hyper w/ Twist",sets:"3 x 12"},
+          {name:"Reverse Crunch",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Strength B",subtitle:"Hang Clean + Front Squat + Single-Leg Calves",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts — priority order",exercises:[
+          {name:"Hang Clean",sets:"5 x 3",weight:"medium",note:"Mid-thigh start. Hip drive into a solid catch. Mirrors jump takeoff mechanics more directly than floor clean."},
+          {name:"Smith Machine Calf Raise",sets:"4 x 8 each",weight:"heavy",note:"Single leg. Heaviest calf session of the week."},
+          {name:"Front Squat",sets:"4 x 5",weight:"heavy",note:"3–4 RIR. Most quad-dominant squat. Upright torso or drop the weight."},
+          {name:"Nordic Hamstring Curl",sets:"3 x 5",weight:"bw",note:"As slow as possible on the way down."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 12"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"Dead Bug",sets:"2 x 10 each"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Incline PRIMARY — tri-sets absorb arms",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts — incline leads every Friday",exercises:[
+          {name:"DB Incline Press",sets:"4 x 6",weight:"heavy",note:"PRIMARY chest lift today and every Friday. Chest is completely fresh — push harder than any other chest work this week. 3–4 RIR."},
+          {name:"Barbell Row",sets:"4 x 5",weight:"heavy",note:"3–4 RIR."}
+        ]},
+        {title:"Tri-set 1 — bench accessory + pull + bicep",isSuperset:true,exercises:[
+          {name:"Low-to-High Cable Flye",sets:"3 x 10",weight:"light",note:"Upper chest isolation — clavicular head at the best angle. Run cable from hip level to shoulder. Most underdeveloped area = biggest visual gains. 3–4 RIR.",tags:["superset"]},
+          {name:"Weighted Pull-Up",sets:"3 x 5",weight:"medium",tags:["superset"]},
+          {name:"Barbell Curl",sets:"3 x 10",weight:"medium",note:"Embedded — always gets done. 3–4 RIR.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — delts + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Lateral Raise",sets:"3 x 12",weight:"light",note:"3 sets W1. Builds to 4 W2–W3.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Non-negotiable every week.",tags:["superset"]},
+          {name:"EZ-Bar Skull Crusher",sets:"3 x 10",weight:"medium",note:"Long head under full stretch — 2nd overhead tricep movement this week. Lower bar to forehead. 3–4 RIR.",tags:["superset"]}
+        ]},
+        {title:"Back isolation",exercises:[
+          {name:"Single-Arm Cable Row",sets:"2 x 12",weight:"light",note:"Arm fully extended at bottom — maximum lat stretch under load. Stretch-mediated growth. Near failure on last set."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Ab Wheel Rollout",sets:"3 x 8",note:"From knees. Don't let hips drop."},
+          {name:"Hanging Leg Raise",sets:"3 x 10",note:"Straight legs if possible."},
+          {name:"L-Up to Hip Lift",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Optional mobility",time:"—",sections:[
+        {title:"Optional",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"2–3 x 45 sec",weight:"iso",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Month 2 underway. W1 should feel manageable — that's by design. Sleep 8–9 hrs."}]}
+      ]}
+    ]
+  },
+  2: {
+    note:"Month 2 Week 2 — RIR: 2–3 RIR on accessories. Starting to feel genuinely hard. Add 5–10 lbs to all main compounds. SET PROGRESSION: lateral raises and arm work move to 4 sets this week (up from 3). This is the set increase that keeps you in the MAV zone as your body adapts. PAP primer up to ~235–245 lbs. Hang clean should feel natural now. Approach focus: block foot rigidity — ankle must be stiff and locked on contact.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Power A",subtitle:"Power Clean load increase",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Power Clean",sets:"5 x 3",weight:"heavy",note:"Add 5–10 lbs from W1. Speed is the judge."},
+          {name:"Barbell Back Squat",sets:"4 x 5",weight:"heavy",note:"~245–255 lbs. 2–3 RIR."},
+          {name:"Seated Calf Raise",sets:"4 x 10",weight:"heavy",note:"Add weight from W1."},
+          {name:"Romanian Deadlift",sets:"4 x 6",weight:"heavy",note:"4 sets now. 2–3 RIR."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 15"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"Plank",sets:"3 x 45 sec"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Bench + Back — tri-sets, 4 rounds",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 5",weight:"heavy",note:"Add 5 lbs. 2–3 RIR."},
+          {name:"Barbell Row",sets:"4 x 5",weight:"heavy",note:"2–3 RIR."}
+        ]},
+        {title:"Tri-set 1 — pull + delts + bicep",isSuperset:true,exercises:[
+          {name:"Weighted Pull-Up",sets:"4 x 5",weight:"medium",note:"4 rounds this week — set progression from W1. Add weight from W1.",tags:["superset"]},
+          {name:"DB Lateral Raise",sets:"4 x 12",weight:"light",note:"4 sets — up from 3. Set progression is the driver of MAV as body adapts.",tags:["superset"]},
+          {name:"Incline DB Curl",sets:"4 x 10",weight:"medium",note:"4 sets. Add weight from W1. Full stretch at bottom. 2–3 RIR.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — incline + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Incline Press",sets:"4 x 8",weight:"medium",note:"Up to next DB pair if W1 was solid. 2–3 RIR.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"4 x 15",weight:"light",tags:["superset"]},
+          {name:"Cable Overhead Extension",sets:"4 x 10",weight:"medium",note:"4 sets. Add weight from W1. Long head under full stretch. 2–3 RIR.",tags:["superset"]}
+        ]},
+        {title:"Back finishing isolation",exercises:[
+          {name:"Straight-Arm Cable Pulldown",sets:"3 x 15",weight:"light",note:"Up from 2 sets W1. Add weight. Near failure on last set."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 15"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"V-Up",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"OHP + Arms · Morning PAP Court",time:"40-45 min",sections:[
+        {title:"Morning Court Session — PAP Protocol",isPapSection:true,exercises:[
+          {name:"PAP Primer — Back Squat",sets:"3 x 3",weight:"heavy",note:"~235–245 lbs. Add weight from W1. Rest 4–6 min before jumping.",tags:["morning","pap"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["morning","outside"]},
+          {name:"Approach Jump Practice",sets:"20–25 attempts",weight:"bw",note:"Technical focus W2: block foot rigidity. Ankle must be stiff and locked on contact — a soft ankle leaks elastic energy.",tags:["morning","outside"]},
+          {name:"Depth Jump (12\" box)",sets:"4 x 5",weight:"bw",note:"Short contact. Land and go immediately.",tags:["morning","outside"]},
+          {name:"Two-Foot Box Jump (28–30\")",sets:"4 x 5",weight:"bw",tags:["morning","outside"]},
+          {name:"Broad Jump",sets:"4 x 4",weight:"bw",tags:["morning","outside"]},
+          {name:"Ankle Pogo Hops",sets:"3 x 25",weight:"bw",tags:["morning","outside"]}
+        ]},
+        {title:"1:45 Lift — Warm-up",exercises:[
+          {name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 5",weight:"heavy",note:"Add 5 lbs. 2–3 RIR."},
+          {name:"Weighted Dip",sets:"4 x 5",weight:"heavy",note:"2–3 RIR."}
+        ]},
+        {title:"Superset — arms",isSuperset:true,exercises:[
+          {name:"Barbell or DB Curl",sets:"4 x 10",weight:"medium",note:"4 sets — up from 3. 2–3 RIR.",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"4 x 10",weight:"medium",note:"4 sets. 2–3 RIR.",tags:["superset"]}
+        ]},
+        {title:"Shoulder width",exercises:[
+          {name:"DB Lateral Raise",sets:"3 x 12",weight:"light",note:"Stays 3 sets Wednesday. You're hitting 4 sets Tuesday and Friday."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"3 x 15 each"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"Back Hyper w/ Twist",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Strength B",subtitle:"Hang Clean volume up + Front Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Hang Clean",sets:"5 x 3",weight:"medium",note:"Add 5–10 lbs. Catch it confidently."},
+          {name:"Smith Machine Calf Raise",sets:"4 x 8 each",weight:"heavy"},
+          {name:"Front Squat",sets:"4 x 5",weight:"heavy",note:"Add 5–10 lbs. 2–3 RIR. Upright torso."},
+          {name:"Nordic Hamstring Curl",sets:"4 x 5",weight:"bw",note:"4 sets now."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"3 x 15"},
+          {name:"Reverse Crunch",sets:"3 x 15"},
+          {name:"Dead Bug",sets:"3 x 10 each"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Incline PRIMARY — tri-sets, 4 rounds",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"DB Incline Press",sets:"4 x 6",weight:"heavy",note:"Add weight from W1. Primary chest. 2–3 RIR."},
+          {name:"Barbell Row",sets:"4 x 5",weight:"heavy",note:"2–3 RIR."}
+        ]},
+        {title:"Tri-set 1 — bench + pull + bicep",isSuperset:true,exercises:[
+          {name:"Low-to-High Cable Flye",sets:"4 x 10",weight:"light",note:"4 rounds. Add weight from W1. Upper chest clavicular head isolation. 2–3 RIR.",tags:["superset"]},
+          {name:"Weighted Pull-Up",sets:"4 x 5",weight:"medium",note:"Add weight from W1.",tags:["superset"]},
+          {name:"Barbell Curl",sets:"4 x 10",weight:"medium",note:"4 sets — up from 3. 2–3 RIR.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — delts + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Lateral Raise",sets:"4 x 12",weight:"light",note:"4 sets — up from 3.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"4 x 15",weight:"light",tags:["superset"]},
+          {name:"EZ-Bar Skull Crusher",sets:"4 x 10",weight:"medium",note:"4 sets. Add weight from W1. Long head at full stretch. 2–3 RIR.",tags:["superset"]}
+        ]},
+        {title:"Back isolation",exercises:[
+          {name:"Single-Arm Cable Row",sets:"3 x 12",weight:"light",note:"Up from 2 sets W1. Full arm extension at bottom. Stretch-mediated lat growth. 2–3 RIR."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Ab Wheel Rollout",sets:"3 x 10"},
+          {name:"Hanging Leg Raise",sets:"3 x 10"},
+          {name:"L-Up to Hip Lift",sets:"3 x 12"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Optional mobility",time:"—",sections:[
+        {title:"Optional",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"2–3 x 45 sec",weight:"iso",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Scale moving = program working."}]}
+      ]}
+    ]
+  },
+  3: {
+    note:"Month 2 Week 3 — RIR: 0–1 on everything. Last set of every exercise — you genuinely cannot do another rep. This is the peak of the mesocycle and the hardest week of the entire program. Set counts stay at 4 but weights go up and RIR goes to the floor. PAP primer at ~245–255 lbs. Depth jumps from 18\" box. Approach jumps at absolute max intent — full sequence, every element connected. Mandatory full rest this weekend.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Power A",subtitle:"Heaviest Power Clean + Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Power Clean",sets:"5 x 3",weight:"heavy",note:"Heaviest clean of Month 2. Still must look fast."},
+          {name:"Barbell Back Squat",sets:"4 x 4",weight:"heavy",note:"~255–265 lbs. Drop to 4 reps. 0–1 RIR — close to your estimated 1RM."},
+          {name:"Seated Calf Raise",sets:"4 x 8",weight:"heavy",note:"Heaviest calf session of Month 2. 0–1 RIR."},
+          {name:"Romanian Deadlift",sets:"4 x 5",weight:"heavy",note:"0–1 RIR. Last rep should be a grind."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"4 x 12"},
+          {name:"Reverse Crunch",sets:"4 x 15"},
+          {name:"Weighted Plank",sets:"3 x 30 sec"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Heaviest Bench + Back — tri-sets at 0–1 RIR",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"Barbell Bench Press",sets:"4 x 4",weight:"heavy",note:"Heaviest bench of Month 2. 0–1 RIR."},
+          {name:"Barbell Row",sets:"4 x 4",weight:"heavy",note:"0–1 RIR."}
+        ]},
+        {title:"Tri-set 1 — pull + delts + bicep",isSuperset:true,exercises:[
+          {name:"Weighted Pull-Up",sets:"4 x 4",weight:"heavy",note:"Heaviest pull-up yet. 0–1 RIR.",tags:["superset"]},
+          {name:"DB Lateral Raise",sets:"4 x 12",weight:"medium",note:"Same 4 sets, push harder — 0–1 RIR. Last set should feel like you couldn't do a 13th rep.",tags:["superset"]},
+          {name:"Incline DB Curl",sets:"4 x 8",weight:"medium",note:"Drop reps, add weight. Full stretch + 0–1 RIR = peak hypertrophy stimulus.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — incline + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Incline Press",sets:"4 x 6",weight:"heavy",note:"Heaviest incline accessory of Month 2. 0–1 RIR.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]},
+          {name:"Cable Overhead Extension",sets:"4 x 8",weight:"heavy",note:"Drop reps, add weight. Long head at full stretch, 0–1 RIR. Last rep is a genuine grind.",tags:["superset"]}
+        ]},
+        {title:"Back finishing isolation",exercises:[
+          {name:"Straight-Arm Cable Pulldown",sets:"3 x 12",weight:"medium",note:"Peak week — heavier than W2. 0–1 RIR on last set. Maximum lat stretch stimulus."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Leg Raise",sets:"3 x 10"},
+          {name:"Reverse Crunch",sets:"4 x 15"},
+          {name:"V-Up",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"Heavy OHP · Peak PAP — 18\" Depth Jumps",time:"40-45 min",sections:[
+        {title:"Morning Court Session — Peak PAP Protocol",isPapSection:true,exercises:[
+          {name:"PAP Primer — Back Squat",sets:"3 x 3",weight:"heavy",note:"~245–255 lbs — heaviest PAP primer of the entire program. Rest 4–6 min. Full neural flush before approaching.",tags:["morning","pap"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Pistol",sets:"1 x 20m each",weight:"bw",tags:["morning","outside"]},
+          {name:"Sprint Development: Gunpowder",sets:"1 x 20m",weight:"bw",tags:["morning","outside"]},
+          {name:"Approach Jump Practice",sets:"25–30 attempts",weight:"bw",note:"Technical focus W3: full sequence at max intent. Penultimate stride + block foot + arm punch all connected. These are the best jumps of Month 2.",tags:["morning","outside"]},
+          {name:"Depth Jump (18\" box)",sets:"4 x 5",weight:"bw",note:"Height up from W1–W2. Higher box = more eccentric load = greater SSC stimulus. Step off, land, go immediately.",tags:["morning","outside"]},
+          {name:"Single-Leg Bound (L&R)",sets:"3 x 6 each",weight:"bw",tags:["morning","outside"]},
+          {name:"Ankle Pogo Hops",sets:"4 x 25",weight:"bw",tags:["morning","outside"]}
+        ]},
+        {title:"1:45 Lift — Warm-up",exercises:[
+          {name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Overhead Press",sets:"4 x 4",weight:"heavy",note:"Heaviest OHP of Month 2. 0–1 RIR."},
+          {name:"Weighted Dip",sets:"4 x 4",weight:"heavy",note:"0–1 RIR."}
+        ]},
+        {title:"Superset — arms",isSuperset:true,exercises:[
+          {name:"Barbell or DB Curl",sets:"4 x 8",weight:"heavy",note:"Drop reps, add weight. 0–1 RIR.",tags:["superset"]},
+          {name:"Tricep Pushdown",sets:"4 x 8",weight:"heavy",note:"0–1 RIR. Last rep should be a genuine grind.",tags:["superset"]}
+        ]},
+        {title:"Shoulder width",exercises:[
+          {name:"DB Lateral Raise",sets:"4 x 12",weight:"medium",note:"4 sets this week. 0–1 RIR."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"4 x 15 each"},
+          {name:"Reverse Crunch",sets:"4 x 15"},
+          {name:"Back Hyper w/ Twist",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Strength B",subtitle:"Heaviest Hang Clean + Front Squat",time:"40-45 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"4 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts",exercises:[
+          {name:"Hang Clean",sets:"5 x 3",weight:"heavy",note:"Heaviest hang clean yet. 0–1 RIR. Catch it strong."},
+          {name:"Smith Machine Calf Raise",sets:"4 x 6 each",weight:"heavy",note:"Drop reps, add weight. Heaviest calf Thursday of Month 2."},
+          {name:"Front Squat",sets:"4 x 4",weight:"heavy",note:"Heaviest front squat of Month 2. 0–1 RIR. Upright torso non-negotiable."},
+          {name:"Nordic Hamstring Curl",sets:"4 x 5",weight:"bw"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"4 x 15"},
+          {name:"Reverse Crunch",sets:"4 x 15"},
+          {name:"Dead Bug",sets:"3 x 10 each"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C",subtitle:"Peak Incline + Back — tri-sets at 0–1 RIR",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts",exercises:[
+          {name:"DB Incline Press",sets:"4 x 5",weight:"heavy",note:"Heaviest incline of the entire program. 0–1 RIR. Primary. Chest is fresh."},
+          {name:"Barbell Row",sets:"4 x 4",weight:"heavy",note:"0–1 RIR."}
+        ]},
+        {title:"Tri-set 1 — bench + pull + bicep",isSuperset:true,exercises:[
+          {name:"Low-to-High Cable Flye",sets:"4 x 8",weight:"medium",note:"Heaviest cable flye of Month 2. Upper chest at 0–1 RIR. Peak stimulus for the clavicular head.",tags:["superset"]},
+          {name:"Weighted Pull-Up",sets:"4 x 4",weight:"heavy",note:"Heaviest pull-up of the program.",tags:["superset"]},
+          {name:"Barbell Curl",sets:"4 x 8",weight:"heavy",note:"Drop reps, add weight. 0–1 RIR.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — delts + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Lateral Raise",sets:"4 x 12",weight:"medium",note:"4 sets. 0–1 RIR. Last rep should be a genuine struggle.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"3 x 15",weight:"light",tags:["superset"]},
+          {name:"EZ-Bar Skull Crusher",sets:"4 x 8",weight:"heavy",note:"Heaviest skull crusher. Long head at full stretch, 0–1 RIR. Last rep is a genuine grind.",tags:["superset"]}
+        ]},
+        {title:"Back isolation",exercises:[
+          {name:"Single-Arm Cable Row",sets:"3 x 12",weight:"medium",note:"Heaviest back isolation of Month 2. Full arm extension at bottom. 0–1 RIR on last set — lat at true failure."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Ab Wheel Rollout",sets:"3 x 12"},
+          {name:"Hanging Leg Raise",sets:"3 x 12"},
+          {name:"L-Up to Hip Lift",sets:"3 x 15"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Rest / Recovery",subtitle:"Critical — hardest week of the program",time:"—",sections:[
+        {title:"Do this",exercises:[
+          {name:"Static Flexibility: Ammo",sets:"1 full round",weight:"bw",tags:["outside"]},
+          {name:"Isometric holds",sets:"Every 6 hrs if knees sore",weight:"iso",tags:["outside"]}
+        ]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Heaviest week of the entire program. Mandatory rest — this is where the adaptation locks in."}]}
+      ]}
+    ]
+  },
+  4: {
+    note:"Month 2 Week 4 — DELOAD. RIR: 4–5 on everything. Never go to failure this week — the goal is blood flow and motor pattern refinement, not stimulus. Volume drops to ~2 sets per exercise (Maintenance Volume). Weights back to W1–2 level. Test vertical Friday and compare directly to your Month 1 result.",
+    days:[
+      {name:"Monday",type:"lower",label:"Lower Power A",subtitle:"Deload",time:"40 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"3 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Power Clean",sets:"4 x 3",weight:"medium",note:"Light and technically clean. 4–5 RIR."},
+          {name:"Barbell Back Squat",sets:"3 x 4",weight:"medium",note:"~225–235 lbs. Easy. 4–5 RIR."},
+          {name:"Seated Calf Raise",sets:"2 x 10",weight:"medium",note:"Never to failure this week."},
+          {name:"Romanian Deadlift",sets:"3 x 5",weight:"light",note:"4–5 RIR."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"2 x 10"},
+          {name:"Reverse Crunch",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Tuesday",type:"upper",label:"Upper Body A",subtitle:"Deload — 2 rounds of each tri-set",time:"45-50 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Barbell Bench Press",sets:"3 x 5",weight:"medium",note:"4–5 RIR."},
+          {name:"Barbell Row",sets:"3 x 5",weight:"medium",note:"4–5 RIR."}
+        ]},
+        {title:"Tri-set 1 — pull + delts + bicep",isSuperset:true,exercises:[
+          {name:"Pull-Up",sets:"2 x 5",weight:"medium",note:"2 rounds. Deload week.",tags:["superset"]},
+          {name:"DB Lateral Raise",sets:"2 x 12",weight:"light",note:"2 sets MV. Never to failure.",tags:["superset"]},
+          {name:"Incline DB Curl",sets:"2 x 10",weight:"light",note:"4–5 RIR. Pattern maintenance only.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — incline + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Incline Press",sets:"2 x 8",weight:"light",note:"4–5 RIR.",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"2 x 15",weight:"light",tags:["superset"]},
+          {name:"Cable Overhead Extension",sets:"2 x 10",weight:"light",note:"4–5 RIR. Never to failure. Motor pattern maintenance.",tags:["superset"]}
+        ]},
+        {title:"Back finishing isolation",exercises:[
+          {name:"Straight-Arm Cable Pulldown",sets:"2 x 12",weight:"light",note:"4–5 RIR. Deload — blood flow and motor pattern only."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"2 x 10"},
+          {name:"V-Up",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Wednesday",type:"upper",label:"Upper Body B",subtitle:"Deload OHP · Light court",time:"40 min",sections:[
+        {title:"Light Morning Court Session",isPapSection:true,exercises:[
+          {name:"PAP Primer — Back Squat (light)",sets:"3 x 3",weight:"medium",note:"~205–215 lbs. Deload weight. Still primes CNS before jumping. 4–5 RIR.",tags:["morning","pap"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["morning","outside"]},
+          {name:"Approach Jump Practice",sets:"10–12 attempts",weight:"bw",note:"Feel the spring. No grinding. Low volume feel session.",tags:["morning","outside"]},
+          {name:"Two-Foot Box Jump",sets:"3 x 3",weight:"bw",note:"Explosive, not fatiguing.",tags:["morning","outside"]},
+          {name:"Ankle Pogo Hops",sets:"2 x 20",weight:"bw",tags:["morning","outside"]}
+        ]},
+        {title:"1:45 Lift — Warm-up",exercises:[
+          {name:"Dynamic Flexibility: Mystique",sets:"1 round x 10 ea",weight:"bw"}
+        ]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Overhead Press",sets:"3 x 5",weight:"medium",note:"4–5 RIR. Never to failure."},
+          {name:"Weighted Dip",sets:"3 x 5",weight:"medium",note:"4–5 RIR."},
+          {name:"Barbell Curl",sets:"2 x 8",weight:"light",note:"4–5 RIR."},
+          {name:"Tricep Pushdown",sets:"2 x 10",weight:"light"}
+        ]},
+        {title:"Shoulder width",exercises:[
+          {name:"DB Lateral Raise",sets:"2 x 12",weight:"light",note:"2 sets MV. Never to failure."}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Side Up",sets:"2 x 12 each"},
+          {name:"Reverse Crunch",sets:"2 x 12"}
+        ]}
+      ]},
+      {name:"Thursday",type:"lower",label:"Lower Strength B",subtitle:"Deload",time:"40 min",sections:[
+        {title:"Warm-up",exercises:[
+          {name:"Manual Isometric Hold",sets:"3 x 45 sec",weight:"iso",tags:["outside"]},
+          {name:"Jump Dynamic Flexibility",sets:"1 round",weight:"bw",tags:["outside"]}
+        ]},
+        {title:"Main Lifts (reduced)",exercises:[
+          {name:"Hang Clean",sets:"3 x 3",weight:"light",note:"Easy and fluid. 4–5 RIR."},
+          {name:"Smith Machine Calf Raise",sets:"2 x 8 each",weight:"medium"},
+          {name:"Front Squat",sets:"3 x 4",weight:"medium",note:"4–5 RIR."},
+          {name:"Nordic Hamstring Curl",sets:"2 x 5",weight:"bw"}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"2 x 10"},
+          {name:"Dead Bug",sets:"2 x 8 each"}
+        ]}
+      ]},
+      {name:"Friday",type:"upper",label:"Upper Body C + Vertical Test",subtitle:"Deload + test day",time:"50-55 min",sections:[
+        {title:"Warm-up",exercises:[{name:"Static Flexibility: Ammo",sets:"1 round",weight:"bw",tags:["outside"]}]},
+        {title:"Main Lifts (short)",exercises:[
+          {name:"DB Incline Press",sets:"3 x 5",weight:"medium",note:"4–5 RIR."},
+          {name:"Barbell Row",sets:"3 x 5",weight:"medium"}
+        ]},
+        {title:"Tri-set 1 — bench + pull + bicep",isSuperset:true,exercises:[
+          {name:"Low-to-High Cable Flye",sets:"2 x 12",weight:"light",note:"4–5 RIR. Deload — feel the upper chest movement, not the weight.",tags:["superset"]},
+          {name:"Pull-Up",sets:"2 x 5",weight:"medium",tags:["superset"]},
+          {name:"Barbell Curl",sets:"2 x 8",weight:"light",note:"4–5 RIR. Never to failure.",tags:["superset"]}
+        ]},
+        {title:"Tri-set 2 — delts + rear delt + tricep",isSuperset:true,exercises:[
+          {name:"DB Lateral Raise",sets:"2 x 12",weight:"light",tags:["superset"]},
+          {name:"Cable Face Pull",sets:"2 x 15",weight:"light",tags:["superset"]},
+          {name:"EZ-Bar Skull Crusher",sets:"2 x 10",weight:"light",note:"4–5 RIR. Never to failure. Long head pattern maintenance.",tags:["superset"]}
+        ]},
+        {title:"Back isolation",exercises:[
+          {name:"Single-Arm Cable Row",sets:"2 x 10",weight:"light",note:"4–5 RIR. Deload — blood flow and lat stretch. Never to failure."}
+        ]},
+        {title:"Vertical Jump Test",exercises:[
+          {name:"Dynamic warm-up + approach jumps",sets:"10 min",weight:"bw",note:"Prime before testing. 10–12 easy approach jumps.",tags:["outside"]},
+          {name:"Max vertical test — wall method",sets:"5–8 attempts",weight:"bw",note:"Compare directly to your Month 1 number. Record the result.",tags:["outside"]}
+        ]},
+        {title:"Core — do anytime",isCoreBlock:true,exercises:[
+          {name:"Hanging Knee Raise",sets:"2 x 12"},
+          {name:"Plank",sets:"2 x 30 sec"}
+        ]}
+      ]},
+      {name:"Saturday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Optional",exercises:[{name:"Light walk or stretch",sets:"—",weight:"bw"}]}
+      ]},
+      {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
+        {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Program complete. Record your vertical improvement and top working weights. These are your new baseline numbers."}]}
+      ]}
+    ]
+  }
+}
+
+}; // end months
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentMonth = 1;
+let currentWeek  = 1;
+let openDays     = new Set();
+let openForms    = new Set();
+
+function storageKey(month, week, dayIdx, exName) {
+  return 'log_m' + month + '_w' + week + '_d' + dayIdx + '_' + exName.replace(/\W+/g,'_').substring(0,30);
+}
+function getLogs(month, week, dayIdx, exName) {
+  try { const r = localStorage.getItem(storageKey(month,week,dayIdx,exName)); return r ? JSON.parse(r) : []; }
+  catch(e) { return []; }
+}
+function saveLogs(month, week, dayIdx, exName, logs) {
+  try { localStorage.setItem(storageKey(month,week,dayIdx,exName), JSON.stringify(logs)); }
+  catch(e) {}
+}
+function addLog(month, week, dayIdx, exName, uid) {
+  const weightEl = document.getElementById('lw-'+uid);
+  const setsEl   = document.getElementById('ls-'+uid);
+  const repsEl   = document.getElementById('lr-'+uid);
+  const noteEl   = document.getElementById('ln-'+uid);
+  const weight = weightEl ? weightEl.value.trim() : '';
+  const sets   = setsEl   ? setsEl.value.trim()   : '';
+  const reps   = repsEl   ? repsEl.value.trim()   : '';
+  const note   = noteEl   ? noteEl.value.trim()   : '';
+  if (!weight && !sets && !reps && !note) return;
+  const logs = getLogs(month, week, dayIdx, exName);
+  const date = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  logs.push({ weight, sets, reps, note, date });
+  saveLogs(month, week, dayIdx, exName, logs);
+  openForms.delete(uid);
+  renderWeek();
+}
+function deleteLog(month, week, dayIdx, exName, idx) {
+  const logs = getLogs(month, week, dayIdx, exName);
+  logs.splice(idx, 1);
+  saveLogs(month, week, dayIdx, exName, logs);
+  renderWeek();
+}
+function setMonth(m) {
+  currentMonth = m;
+  currentWeek  = 1;
+  openDays     = new Set();
+  openForms    = new Set();
+  document.querySelectorAll('.month-tab').forEach((t,i) => t.classList.toggle('active', i+1===m));
+  renderWeekTabs();
+  renderWeek();
+}
+function setWeek(w) {
+  currentWeek = w;
+  openDays    = new Set();
+  openForms   = new Set();
+  document.querySelectorAll('.week-tab').forEach((t,i) => t.classList.toggle('active', i+1===w));
+  renderWeek();
+}
+function renderWeekTabs() {
+  document.getElementById('week-tabs').innerHTML = [1,2,3,4].map((w,i) =>
+    '<div class="week-tab' + (i===0?' active':'') + '" onclick="setWeek('+w+')">Week '+w+'</div>'
+  ).join('');
+}
+function toggleDay(idx) {
+  if (openDays.has(idx)) openDays.delete(idx); else openDays.add(idx);
+  renderWeek();
+}
+function toggleForm(uid) {
+  if (openForms.has(uid)) openForms.delete(uid); else openForms.add(uid);
+  renderWeek();
+}
+function weightBadge(w) {
+  const map = {heavy:['w-heavy','Heavy'],medium:['w-medium','Moderate'],light:['w-light','Light'],bw:['w-bw','Bodyweight'],iso:['w-iso','Isometric']};
+  const [cls,label] = map[w]||['w-bw','—'];
+  return '<span class="ex-weight-badge ' + cls + '">' + label + '</span>';
+}
+function tagsHtml(tags) {
+  if (!tags || !tags.length) return '';
+  return tags.map(function(t) {
+    if (t==='outside')  return '<span class="tag tag-outside">outside gym</span>';
+    if (t==='superset') return '<span class="tag tag-superset">superset</span>';
+    if (t==='morning')  return '<span class="tag tag-morning">morning</span>';
+    if (t==='pap')      return '<span class="tag tag-pap">PAP primer</span>';
+    return '';
+  }).join('');
+}
+function pillClass(t) {
+  return {lower:'pill-lower',upper:'pill-upper',rest:'pill-rest'}[t]||'pill-rest';
+}
+function renderExercise(ex, dayIdx, secTitle) {
+  var uid = ('m'+currentMonth+'w'+currentWeek+'d'+dayIdx+'_'+(ex.name+secTitle).replace(/\W/g,'').substring(0,24));
+  var needsLog = ex.weight && ex.weight!=='bw' && ex.weight!=='iso';
+  var logs = needsLog ? getLogs(currentMonth, currentWeek, dayIdx, ex.name) : [];
+  var formOpen = openForms.has(uid);
+  var logHtml = '';
+  if (needsLog) {
+    var entries = '';
+    for (var i=0; i<logs.length; i++) {
+      var l = logs[i];
+      var parts = [];
+      if (l.weight) parts.push(l.weight + ' lbs');
+      if (l.sets)   parts.push(l.sets + ' sets');
+      if (l.reps)   parts.push(l.reps + ' reps');
+      var summary = parts.join(' · ');
+      if (l.note) summary += (summary ? ' — ' : '') + l.note;
+      entries += '<div class="log-entry">'
+        + '<span class="log-entry-text">' + (summary||'—') + '</span>'
+        + '<span class="log-entry-date">' + (l.date||'') + '</span>'
+        + '<button class="log-delete" onclick="event.stopPropagation();deleteLog('+currentMonth+','+currentWeek+','+dayIdx+',\''+ex.name.replace(/'/g,"\\'")+'\',' + i + ')" title="Delete">✕</button>'
+        + '</div>';
+    }
+    if (entries) logHtml += '<div class="log-entries">' + entries + '</div>';
+    if (formOpen) {
+      logHtml += '<div class="log-form">'
+        + '<div class="log-form-title">Log this exercise</div>'
+        + '<div class="log-fields">'
+        + '<div class="log-field"><label>Weight (lbs)</label><input id="lw-'+uid+'" type="number" placeholder="e.g. 185" min="0" step="2.5"></div>'
+        + '<div class="log-field"><label>Sets completed</label><input id="ls-'+uid+'" type="number" placeholder="e.g. 4" min="0" step="1"></div>'
+        + '<div class="log-field"><label>Reps per set</label><input id="lr-'+uid+'" type="number" placeholder="e.g. 6" min="0" step="1"></div>'
+        + '<div class="log-field"><label>Notes (optional)</label><input id="ln-'+uid+'" type="text" placeholder="e.g. felt heavy, form good..."></div>'
+        + '</div>'
+        + '<div class="log-actions">'
+        + '<button class="log-save-btn" onclick="event.stopPropagation();addLog('+currentMonth+','+currentWeek+','+dayIdx+',\''+ex.name.replace(/'/g,"\\'")+'\',\''+uid+'\')">Save</button>'
+        + '<button class="log-cancel-btn" onclick="event.stopPropagation();toggleForm(\''+uid+'\')">Cancel</button>'
+        + '</div></div>';
+    } else {
+      logHtml += '<button class="log-toggle-btn" onclick="event.stopPropagation();toggleForm(\''+uid+'\')">+ Log this exercise</button>';
+    }
+    logHtml = '<div class="log-area">' + logHtml + '</div>';
+  }
+  return '<div class="exercise-row">'
+    + '<div class="ex-top">'
+    + '<div>'
+    + '<div class="ex-name">' + ex.name + '</div>'
+    + (ex.note ? '<div class="ex-note">' + ex.note + '</div>' : '')
+    + '<div class="ex-tags">' + tagsHtml(ex.tags) + '</div>'
+    + logHtml
+    + '</div>'
+    + '<div class="ex-badge">'
+    + '<div class="ex-sets-label">' + ex.sets + '</div>'
+    + (ex.weight ? weightBadge(ex.weight) : '')
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+function renderWeek() {
+  var data = months[currentMonth][currentWeek];
+  document.getElementById('week-note').textContent = data.note;
+  var grid = document.getElementById('day-grid');
+  var html = '';
+  for (var di=0; di<data.days.length; di++) {
+    var day = data.days[di];
+    var isOpen = openDays.has(di);
+    var isLong = day.time && (day.time.indexOf('50')>=0 || day.time.indexOf('60')>=0);
+    var bodyHtml = '';
+    for (var si=0; si<day.sections.length; si++) {
+      var sec = day.sections[si];
+      if (sec.isCoreBlock) {
+        var coreRows = '';
+        for (var ci=0; ci<sec.exercises.length; ci++) {
+          var ce = sec.exercises[ci];
+          coreRows += '<div class="core-row"><span class="core-row-name">' + ce.name + (ce.note ? ' <span style="font-weight:400;color:var(--text3);font-size:11px">— '+ce.note+'</span>' : '') + '</span><span class="core-row-sets">' + ce.sets + '</span></div>';
+        }
+        bodyHtml += '<div class="core-block"><div class="core-block-title">Core block <span class="tag tag-core">do anytime</span></div>' + coreRows + '</div>';
+        continue;
+      }
+      if (sec.isPapSection) {
+        bodyHtml += '<div class="pap-box"><strong>Morning session</strong> — do before school on Wednesday. The PAP squat primer is backed by peer-reviewed research to increase jump height 4–8 minutes after heavy squats. At your strength level (~1.47× BW squat), this effect is significant. Rest 4–6 min after the primer before approaching the rim.</div>';
+      }
+      var rows = '';
+      for (var ei=0; ei<sec.exercises.length; ei++) {
+        rows += renderExercise(sec.exercises[ei], di, sec.title);
+      }
+      if (sec.isSuperset) {
+        bodyHtml += '<div class="section-label">' + sec.title + '</div><div class="superset-group">' + rows + '</div>';
+      } else {
+        bodyHtml += '<div class="section-label">' + sec.title + '</div>' + rows;
+      }
+    }
+    html += '<div class="day-card">'
+      + '<div class="day-header" onclick="toggleDay(' + di + ')">'
+      + '<div class="day-header-left">'
+      + '<span class="day-pill ' + pillClass(day.type) + '">' + day.label + '</span>'
+      + '<div><div class="day-name">' + day.name + '</div><div class="day-subtitle">' + day.subtitle + '</div></div>'
+      + '</div>'
+      + '<div class="day-meta">'
+      + '<span class="time-badge' + (isLong?' longer':'') + '">' + day.time + '</span>'
+      + '<span class="chevron' + (isOpen?' open':'') + '">▼</span>'
+      + '</div></div>'
+      + '<div class="day-body' + (isOpen?' open':'') + '">' + bodyHtml + '</div>'
+      + '</div>';
+  }
+  grid.innerHTML = html;
+}
+renderWeekTabs();
+renderWeek();
+</script>
+</body>
+</html>
