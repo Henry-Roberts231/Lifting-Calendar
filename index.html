@@ -84,6 +84,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .circuit-group  { border-left:3px solid var(--accent2); margin-left:14px; background:#fdf8f0; border-radius:0 var(--radius-md) var(--radius-md) 0; }
 @media (prefers-color-scheme:dark) { .circuit-group{background:#2a1e08;} }
 .circuit-group .exercise-row { padding-left:10px; }
+.iso-group { border-left:3px solid var(--accent3); margin-left:14px; background:#edf3ff; border-radius:0 var(--radius-md) var(--radius-md) 0; }
+@media (prefers-color-scheme:dark) { .iso-group{background:#0a1a35;} }
+.iso-group .exercise-row { padding-left:10px; }
 .circuit-note { font-size:12px; color:var(--text2); padding:8px 14px; border-top:1px solid var(--border); background:var(--bg2); line-height:1.4; }
 
 /* ── Exercise Rows ── */
@@ -157,7 +160,7 @@ footer { margin-top:3rem; text-align:center; font-size:12px; color:var(--text3);
 <div class="wrap">
   <div class="app-header">
     <h1>Henry's Training Program</h1>
-    <p>Month 3 · June 2026 · Tap any exercise or day to expand</p>
+    <p>Month 3 · Fresh Start June 5, 2026 · Tap any exercise or day to expand</p>
   </div>
 
   <div class="view-toggle">
@@ -222,10 +225,14 @@ const pfProgram = {
         {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"High pulley, split rope. Pull to ears, elbows high. Rear delt + scapular health — non-negotiable."}
       ]}
     ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat + Posterior Chain",time:"45-50 min",sections:[
+    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat + Posterior Chain",time:"55-60 min",sections:[
       {title:"Warm-up",exercises:[
         {name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},
         {name:"Bodyweight Squat",sets:"2 x 10",weight:"bw",note:"Full depth. Prep knees and hips."}
+      ]},
+      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Band around rack post at knee height. Sit back ~60–70° knee flexion, shins vertical. Effort: ~70% (7/10). Pain 0–3/10 is OK during hold; above 5/10 reduce depth slightly. 2 min rest between holds. Backed by Rio et al. — acute pain relief lasts 40+ min. ~7.5 min total."},
+        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"Band at knee height looped behind knee. Step back for tension. Push knee fully straight against band and hold 6 sec each rep. VMO (inner quad) fires — corrects patellar tracking. 60 sec rest between sets."}
       ]},
       {title:"Power Movement",exercises:[
         {name:"Trap Bar Deadlift — Explosive",sets:"3 x 4",weight:"heavy",note:"~225–245 lbs. Explosive concentric, full hip extension. PF replacement for power cleans.\n→ No trap bar: Barbell Speed Squat @60% 1RM, max bar speed (3×5)\n→ Jump day at school: 3×3 squat @70%, rest 4–6 min → court. Skip trap bar.",tags:["pap"]}
@@ -283,10 +290,15 @@ const pfProgram = {
         {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt + scapular protocol. Every Pull session.",tags:["superset"]}
       ]}
     ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy + Plyometrics (optional)",time:"50-55 min",sections:[
+    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy + Plyometrics",time:"60-65 min",sections:[
       {title:"Warm-up",exercises:[
         {name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},
         {name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",note:"Low amplitude, not max — CNS activation only.",tags:["outside"]}
+      ]},
+      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Same as Tuesday. 70% effort, ~60–70° knee flex. 2 min rest. Analgesic effect covers the full leg session. ~7.5 min."},
+        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Band around ankles. Stand on one leg. Drive stance hip outward against band. Keep pelvis level — no side lean. Hip stability + knee valgus control for court play. 30 sec rest between legs."},
+        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Stand on one foot. Press ball of foot firmly into floor. Strong steady hold — no shaking. Ankle stability. Reduces lower body stiffness during lateral cuts. 20 sec rest."}
       ]},
       {title:"Single-Leg Strength — Primary",exercises:[
         {name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"medium",note:"~35–50 lbs each hand. Rear foot on bench. Full depth. Best single-leg jump carryover. 3–4 RIR."}
@@ -301,8 +313,8 @@ const pfProgram = {
       {title:"Calves",exercises:[
         {name:"Standing Calf Raise",sets:"4 x 12",weight:"medium",note:"Pause at top. Gastrocnemius."}
       ]},
-      {title:"Plyometrics — at your discretion (school/outdoor)",exercises:[
-        {name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"School/outdoor only. React instantly off floor. 60–90 sec rest between reps.",tags:["outside"]}
+      {title:"Plyometrics — PRIORITY (any open space)",exercises:[
+        {name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"School, park, parking lot, any flat surface with a step or curb. React instantly off the floor — minimize ground contact. 60–90 sec rest between reps. This is a core vertical driver — do not skip.",tags:["outside"]}
       ]}
     ]},
     {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[
@@ -332,8 +344,12 @@ const pfProgram = {
       ]},
       {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt + scapular protocol."}]}
     ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — add load",time:"45-50 min",sections:[
+    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — add load",time:"55-60 min",sections:[
       {title:"Warm-up",exercises:[{name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},{name:"Bodyweight Squat",sets:"2 x 10",weight:"bw"}]},
+      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Same protocol. 70% effort, ~60–70° knee flex. 2 min rest. Continue building analgesic adaptation."},
+        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"Band behind knee. Full extension hold 6 sec each rep. VMO activation. 60 sec rest."}
+      ]},
       {title:"Power Movement",exercises:[
         {name:"Trap Bar Deadlift — Explosive",sets:"4 x 4",weight:"heavy",note:"4th set added. Add 10–20 lbs. Bar speed priority.\n→ No trap bar: Speed Squat 4×5.\n→ Jump day: PAP primer → court.",tags:["pap"]}
       ]},
@@ -372,8 +388,13 @@ const pfProgram = {
         {name:"Cable Face Pull",sets:"4 x 15",weight:"light",note:"4 rounds. Rear delt protocol.",tags:["superset"]}
       ]}
     ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy — build load",time:"50-55 min",sections:[
+    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy — build load",time:"60-65 min",sections:[
       {title:"Warm-up",exercises:[{name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},{name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",tags:["outside"]}]},
+      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Week 2 — same protocol, same effort. Continue building tendon tolerance."},
+        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Band around ankles. Drive stance hip outward. Pelvis level. 30 sec rest between legs."},
+        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Press ball of foot into floor. Steady hold. Ankle stability."}
+      ]},
       {title:"Single-Leg Strength — Primary",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"medium",note:"Add 5–10 lbs. 2–3 RIR."}]},
       {title:"Quad Volume",exercises:[{name:"Leg Press",sets:"4 x 12",weight:"medium",note:"Add weight. 2–3 RIR."}]},
       {title:"Posterior Chain",exercises:[
@@ -381,7 +402,7 @@ const pfProgram = {
         {name:"Walking DB Lunge",sets:"3 x 14 ea",weight:"medium",note:"2 more reps per leg."}
       ]},
       {title:"Calves",exercises:[{name:"Standing Calf Raise",sets:"4 x 12",weight:"medium",note:"Add weight."}]},
-      {title:"Plyometrics — at your discretion",exercises:[{name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"Faster reactivity — shorten ground contact vs W1.",tags:["outside"]}]}
+      {title:"Plyometrics — PRIORITY (any open space)",exercises:[{name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"Faster reactivity goal — shorten ground contact vs W1. Do these anywhere. Core vertical driver.",tags:["outside"]}]}
     ]},
     {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[{title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}]},
     {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Peak week starts Monday. Sleep and eat well this weekend."}]}]}
@@ -404,8 +425,12 @@ const pfProgram = {
       ]},
       {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt protocol. Last set near failure."}]}
     ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — PEAK",time:"50 min",sections:[
+    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — PEAK",time:"55-60 min",sections:[
       {title:"Warm-up",exercises:[{name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},{name:"Vertical Jump Activation",sets:"3 x 3",weight:"bw",note:"Easy jumps — prime CNS.",tags:["outside"]}]},
+      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"PEAK week — same protocol. Knee pain relief is most important today with heavy loads coming. 70% effort, 2 min rest."},
+        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"VMO activation. Band behind knee. 6 sec hold each rep. 60 sec rest."}
+      ]},
       {title:"Power Movement",exercises:[{name:"Trap Bar Deadlift — Explosive",sets:"4 x 4",weight:"heavy",note:"PEAK. Push for weight PR. 0–1 RIR. Max bar speed every rep.",tags:["pap"]}]},
       {title:"Primary Squat",exercises:[{name:"Barbell Back Squat",sets:"5 x 4",weight:"heavy",note:"PEAK. Weight PR target. ~245–265 lbs. 0–1 RIR."}]},
       {title:"Posterior Chain",exercises:[{name:"Romanian Deadlift",sets:"4 x 8",weight:"heavy",note:"Heaviest RDL of month. Last set near failure."}]},
@@ -440,8 +465,13 @@ const pfProgram = {
         {name:"Cable Face Pull",sets:"4 x 15",weight:"light",note:"Rear delt protocol.",tags:["superset"]}
       ]}
     ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Power — PEAK",time:"55 min",sections:[
+    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Power — PEAK",time:"62-68 min",sections:[
       {title:"Warm-up",exercises:[{name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},{name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",tags:["outside"]}]},
+      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"PEAK — most important day to run this. Heavy BSS and Leg Press today. 70% effort. 2 min rest. Pain relief covers the session."},
+        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Hip stability. Pelvis level. 30 sec rest between legs."},
+        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Ankle stability. Steady hold. 20 sec rest."}
+      ]},
       {title:"Single-Leg Strength — Primary",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"heavy",note:"PEAK. Heaviest of month. 0–1 RIR."}]},
       {title:"Quad Volume",exercises:[{name:"Leg Press",sets:"5 x 10",weight:"heavy",note:"PEAK — 5th set. Heaviest load. 0–1 RIR."}]},
       {title:"Posterior Chain",exercises:[
@@ -449,7 +479,7 @@ const pfProgram = {
         {name:"Walking DB Lunge",sets:"3 x 16 ea",weight:"medium",note:"Peak volume — 16 reps."}
       ]},
       {title:"Calves",exercises:[{name:"Standing Calf Raise",sets:"5 x 10",weight:"heavy",note:"PEAK — 5th set. Calf PR target."}]},
-      {title:"Plyometrics — at your discretion",exercises:[{name:"Depth Jumps — 18\" box",sets:"3 x 5",weight:"bw",note:"PEAK — up to 18\" box. Max reactive force. 90 sec rest between reps.",tags:["outside"]}]}
+      {title:"Plyometrics — PRIORITY (any open space)",exercises:[{name:"Depth Jumps — 18\" box",sets:"3 x 5",weight:"bw",note:"PEAK — progress to 18\" box this week. Max reactive force — minimize ground contact time. 90 sec rest between reps. Core vertical driver — do not skip.",tags:["outside"]}]}
     ]},
     {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[{title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}]},
     {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Peak week done. Deload starts Monday."}]}]}
@@ -471,7 +501,11 @@ const pfProgram = {
       ]},
       {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"2 x 15",weight:"light",note:"Shoulder health maintenance."}]}
     ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — DELOAD + Jump Test",time:"35-40 min",sections:[
+    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — DELOAD + Jump Test",time:"45-50 min",sections:[
+      {title:"Isometric Warm-Up — Maintenance",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"3 × 45-sec hold",weight:"iso",note:"Deload — maintain protocol. 3 holds instead of 5. Same 70% effort, 2 min rest. Continue tendon health work even during deload."},
+        {name:"Terminal Knee Extension (TKE) Isometric",sets:"2 × 10 reps × 6-sec hold",weight:"light",note:"Maintenance. 2 sets instead of 3. VMO activation before light squat work."}
+      ]},
       {title:"Power Movement",exercises:[{name:"Trap Bar Deadlift — Moderate",sets:"3 x 4",weight:"light",note:"~60% of W3. Bar speed still crisp. Flush legs."}]},
       {title:"Primary Squat",exercises:[{name:"Barbell Back Squat",sets:"3 x 5",weight:"light",note:"~55% of W3. 4–5 RIR. Perfect form."}]},
       {title:"Posterior Chain",exercises:[{name:"Romanian Deadlift",sets:"2 x 8",weight:"light",note:"Light. Full stretch, no soreness goal."}]},
@@ -504,7 +538,11 @@ const pfProgram = {
         {name:"Cable Face Pull",sets:"2 x 15",weight:"light",note:"Still non-negotiable.",tags:["superset"]}
       ]}
     ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Legs — DELOAD",time:"35 min",sections:[
+    {name:"Friday",type:"legs",label:"Legs",subtitle:"Legs — DELOAD",time:"45 min",sections:[
+      {title:"Isometric Warm-Up — Maintenance",isIsoBlock:true,exercises:[
+        {name:"Spanish Squat Isometric Hold",sets:"3 × 45-sec hold",weight:"iso",note:"Deload — 3 holds. Maintain knee health protocol. Don't skip — this is when tendon adaptation continues while mechanical load is reduced."},
+        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 20 sec per leg",weight:"light",note:"Reduced. Keep hip stability work going through deload."}
+      ]},
       {title:"Single-Leg — Reduced",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"3 x 8 ea",weight:"light",note:"~60% of W3. Blood flow."}]},
       {title:"Quad Volume — Reduced",exercises:[{name:"Leg Press",sets:"2 x 12",weight:"light",note:"Very light. Flush quads."}]},
       {title:"Posterior Chain — Reduced",exercises:[{name:"Lying or Seated Leg Curl",sets:"2 x 10",weight:"light",note:"Light. Recovery."}]},
@@ -847,6 +885,13 @@ function renderSection(sec, isPF, week, dayIdx, secIdx) {
     return `<div class="section-label">${sec.title}</div><div class="circuit-group">`+
       sec.exercises.map(ex=>renderBWExercise(ex)).join('')+`</div>`+
       (sec.circuitNote?`<div class="circuit-note">${sec.circuitNote}</div>`:'');
+  }
+  // Isometric block
+  if (sec.isIsoBlock) {
+    const inner = isPF
+      ? sec.exercises.map((ex,ei)=>renderPFExercise(ex,week,dayIdx,secIdx,ei)).join('')
+      : sec.exercises.map(ex=>renderBWExercise(ex)).join('');
+    return `<div class="section-label" style="color:var(--accent3);font-weight:700">◆ ${sec.title}</div><div class="iso-group">${inner}</div>`;
   }
   // Superset / Tri-set
   if (sec.isSuperset) {
