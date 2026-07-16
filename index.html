@@ -1,947 +1,1824 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Henry's Training Program</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training — Lifting + Skillwork</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:#ffffff; --bg2:#f5f5f3; --bg3:#eeede9;
-  --text:#1a1a18; --text2:#5a5a56; --text3:#8a8a84;
-  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.18);
-  --accent:#1a9e6e; --accent2:#e07b2a; --accent3:#4a7fd4;
-  --danger:#c94040;
-  --radius-md:8px; --radius-lg:12px;
+/* ============================================================
+   TRAINING — combined single-file app, dark mode throughout.
+   Two main tabs: LIFTING (Block 1) and SKILLWORK (guard trainer).
+   Each app's original styles are scoped under #app-lift / #app-skill
+   via CSS nesting so nothing collides.
+   ============================================================ */
+:root { --mainbar-h: 47px; color-scheme: dark; }
+html { scroll-behavior: auto; }
+body { margin: 0; padding: 0; background: #0a0a0a; }
+[hidden] { display: none !important; }
+::selection { background: #f2f2f2; color: #0a0a0a; }
+
+/* ---------- MAIN TAB BAR (Lifting / Skillwork) ---------- */
+.mainbar {
+  position: sticky; top: 0; z-index: 90;
+  display: flex; align-items: stretch;
+  background: #0a0a0a;
+  border-bottom: 3px solid #f2f2f2;
+  height: calc(var(--mainbar-h) - 3px);
 }
-@media (prefers-color-scheme:dark) {
-  :root { --bg:#1c1c1a; --bg2:#252523; --bg3:#2e2e2b; --text:#e8e6de; --text2:#9a9890; --text3:#6a6860; --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.18); }
+.mainbar-tab {
+  flex: 1; border: 0; margin: 0; cursor: pointer;
+  background: #0a0a0a; color: #8f8f8f;
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
 }
-body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); }
-.wrap { max-width:720px; margin:0 auto; padding:1.5rem 1rem 4rem; }
-.app-header h1 { font-size:22px; font-weight:600; margin-bottom:4px; }
-.app-header p  { font-size:13px; color:var(--text2); margin-bottom:1.25rem; }
+.mainbar-tab + .mainbar-tab { border-left: 2px solid #3a3a3a; }
+.mainbar-tab:hover { color: #f2f2f2; }
+.mainbar-tab[aria-selected="true"] { background: #f2f2f2; color: #0a0a0a; }
+.mainbar-tab:focus-visible { outline: 3px solid #f2f2f2; outline-offset: -4px; }
 
-/* ── View Toggle ── */
-.view-toggle { display:flex; border:1.5px solid var(--border2); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:1.25rem; }
-.view-btn { flex:1; padding:11px 16px; font-size:14px; font-weight:600; cursor:pointer; border:none; background:var(--bg2); color:var(--text2); font-family:inherit; transition:all 0.18s; letter-spacing:0.01em; }
-.view-btn:first-child { border-right:1.5px solid var(--border2); }
-.view-btn.active { background:var(--accent3); color:#fff; }
-@media (prefers-color-scheme:dark) { .view-btn.active { background:#2a5aaa; } }
-
-/* ── Banners ── */
-.banner { border-radius:var(--radius-md); padding:10px 14px; margin-bottom:1.25rem; font-size:13px; color:var(--text2); line-height:1.6; }
-.banner-blue { background:#e8f0fa; border-left:4px solid var(--accent3); }
-.banner-green { background:#e8f5ee; border-left:4px solid var(--accent); }
-@media (prefers-color-scheme:dark) { .banner-blue{background:#0e1e40;color:#9ab0e8;} .banner-green{background:#0e3020;color:#70c090;} }
-.banner strong { color:var(--text); font-weight:600; }
-
-/* ── Week Tabs ── */
-.week-tabs { display:flex; gap:6px; margin-bottom:0.75rem; flex-wrap:wrap; }
-.week-tab { padding:6px 14px; border-radius:var(--radius-md); border:1px solid var(--border2); font-size:13px; cursor:pointer; background:var(--bg2); color:var(--text2); transition:all 0.15s; font-family:inherit; }
-.week-tab.active { background:var(--accent2); border-color:var(--accent2); color:#fff; }
-.week-note { padding:10px 14px; background:var(--bg2); border-radius:var(--radius-md); margin-bottom:1rem; font-size:13px; color:var(--text2); border-left:3px solid var(--accent2); line-height:1.6; }
-
-/* ── Legend ── */
-.legend { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; }
-.legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
-.legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-
-/* ── Day Cards ── */
-.day-grid { display:flex; flex-direction:column; gap:8px; }
-.day-card { border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; background:var(--bg); }
-.day-header { padding:12px 14px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
-.day-header:hover { background:var(--bg2); }
-.day-header-left { display:flex; align-items:center; gap:10px; }
-.day-pill { font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.pill-upper  { background:#e8f0fa; color:#2a5aaa; }
-.pill-lower  { background:#e8f5ee; color:#1a7a50; }
-.pill-push   { background:#fdf0e0; color:#a06010; }
-.pill-pull   { background:#f5e8fa; color:#7a2aaa; }
-.pill-legs   { background:#e0f5f8; color:#0a6a80; }
-.pill-rest   { background:var(--bg2); color:var(--text3); border:1px solid var(--border); }
-.pill-power  { background:#fde8e8; color:#993030; }
-.pill-core-x { background:#2a1a3a; color:#e0b0ff; }
-@media (prefers-color-scheme:dark) {
-  .pill-upper{background:#0e2040;color:#7aaaf0;} .pill-lower{background:#0e3d28;color:#5ecb96;}
-  .pill-push{background:#3a2008;color:#f0a040;}  .pill-pull{background:#2d1040;color:#c080f0;}
-  .pill-legs{background:#062530;color:#50c0d8;}  .pill-power{background:#3d1010;color:#f08080;}
-  .pill-core-x{background:#1a0a28;color:#c090f8;}
-}
-.day-name     { font-size:15px; font-weight:600; color:var(--text); }
-.day-subtitle { font-size:12px; color:var(--text3); margin-top:1px; }
-.day-meta     { display:flex; align-items:center; gap:8px; }
-.time-badge   { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--bg2); color:var(--text3); border:1px solid var(--border); white-space:nowrap; }
-.chevron      { font-size:11px; color:var(--text3); transition:transform 0.2s; }
-.chevron.open { transform:rotate(180deg); }
-.day-body     { display:none; border-top:1px solid var(--border); }
-.day-body.open{ display:block; }
-
-/* ── Sections ── */
-.section-label { font-size:11px; font-weight:600; color:var(--text3); letter-spacing:0.06em; text-transform:uppercase; padding:10px 14px 4px; }
-.superset-group { border-left:3px solid #c07af0; margin-left:14px; }
-.superset-group .exercise-row { padding-left:10px; }
-.circuit-group  { border-left:3px solid var(--accent2); margin-left:14px; background:#fdf8f0; border-radius:0 var(--radius-md) var(--radius-md) 0; }
-@media (prefers-color-scheme:dark) { .circuit-group{background:#2a1e08;} }
-.circuit-group .exercise-row { padding-left:10px; }
-.iso-group { border-left:3px solid var(--accent3); margin-left:14px; background:#edf3ff; border-radius:0 var(--radius-md) var(--radius-md) 0; }
-@media (prefers-color-scheme:dark) { .iso-group{background:#0a1a35;} }
-.iso-group .exercise-row { padding-left:10px; }
-.circuit-note { font-size:12px; color:var(--text2); padding:8px 14px; border-top:1px solid var(--border); background:var(--bg2); line-height:1.4; }
-
-/* ── Exercise Rows ── */
-.exercise-row { padding:9px 14px; border-bottom:1px solid var(--border); }
-.exercise-row:last-child { border-bottom:none; }
-.ex-top  { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:start; }
-.ex-name { font-size:13px; font-weight:600; color:var(--text); }
-.ex-note { font-size:12px; color:var(--text2); margin-top:2px; line-height:1.4; white-space:pre-line; }
-.ex-tags { margin-top:3px; }
-.ex-badge      { text-align:right; }
-.ex-sets-label { font-size:13px; color:var(--text2); white-space:nowrap; }
-.ex-weight-badge { font-size:11px; padding:2px 8px; border-radius:999px; margin-top:4px; display:inline-block; font-weight:500; }
-.w-heavy{background:#fde8e8;color:#993030;} .w-medium{background:#fdf0e0;color:#a06010;}
-.w-light{background:#e8f5ee;color:#1a7a50;} .w-bw{background:var(--bg2);color:var(--text3);}
-.w-iso{background:#f5e8fa;color:#7a2aaa;}
-@media (prefers-color-scheme:dark) {
-  .w-heavy{background:#3d1010;color:#f08080;} .w-medium{background:#3d2a08;color:#f0a850;}
-  .w-light{background:#0e3020;color:#60c090;} .w-iso{background:#2d1040;color:#c080f0;}
-}
-.tag { font-size:11px; padding:1px 7px; border-radius:999px; display:inline-block; margin-right:3px; font-weight:500; }
-.tag-outside{color:#185fa5;background:#e6f1fb;} .tag-superset{color:#7a2aaa;background:#f5e8fa;}
-.tag-core{color:#1a7a50;background:#e8f5ee;}   .tag-pap{color:#a06010;background:#fdf0e0;}
-.tag-bar{color:#185fa5;background:#e6f1fb;}    .tag-power{color:#993030;background:#fde8e8;}
-@media (prefers-color-scheme:dark) {
-  .tag-outside{background:#0c2a40;color:#70b0f0;} .tag-superset{background:#2d1040;color:#c080f0;}
-  .tag-core{background:#0e3020;color:#60c090;} .tag-bar{background:#0c2a40;color:#70b0f0;}
-  .tag-power{background:#3d1010;color:#f08080;}
+@media print {
+  .mainbar { display: none; }
 }
 
-/* ── Core Blocks ── */
-.core-block { background:var(--bg2); margin:8px 14px; border-radius:var(--radius-md); padding:8px 10px; }
-.core-block-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
-.core-row { display:flex; justify-content:space-between; align-items:flex-start; padding:5px 0; border-bottom:1px solid var(--border); font-size:13px; gap:8px; }
-.core-row:last-child { border-bottom:none; }
-.core-row-left { flex:1; }
-.core-row-name { color:var(--text); font-weight:500; }
-.core-row-note { font-size:11px; color:var(--text3); margin-top:2px; line-height:1.4; }
-.core-row-sets { color:var(--text2); white-space:nowrap; font-size:13px; }
+/* ============================================================
+   APP 1 — LIFTING (Block 1 · Strength + Tendon Capacity)
+   Original monochrome brutalism, inverted to dark.
+   ============================================================ */
+#app-lift {
+  --ink: #f2f2f2;
+  --paper: #0a0a0a;
+  --g1: #e5e5e5;
+  --g3: #c8c8c8;
+  --g6: #8f8f8f;
+  --g9: #6a6a6a;
+  --gc: #3a3a3a;
+  --ge: #262626;
+  --gf: #161616;
+  --signal: #ff2600;
+  --rule: 3px solid var(--ink);
+  --rule2: 2px solid var(--ink);
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
-/* ── Block Headers (for core circuit) ── */
-.block-header { background:var(--bg3); padding:8px 14px; font-size:12px; font-weight:700; color:var(--text2); letter-spacing:0.05em; text-transform:uppercase; border-top:1px solid var(--border); display:flex; justify-content:space-between; }
-@media (prefers-color-scheme:dark) { .block-header{background:#2e2e2b;} }
-.block-rest { font-size:11px; font-weight:500; color:var(--accent2); }
+  box-sizing: border-box;
+  font-family: var(--mono);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 
-/* ── Log (PF only) ── */
-.log-area { margin-top:8px; }
-.log-entries { margin-bottom:6px; }
-.log-entry { display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:var(--bg2); border-radius:var(--radius-md); margin-bottom:4px; font-size:12px; }
-.log-entry-text { color:var(--text); font-weight:500; flex:1; }
-.log-entry-date { font-size:11px; color:var(--text3); margin:0 8px; white-space:nowrap; }
-.log-delete { background:none; border:none; color:var(--danger); cursor:pointer; font-size:15px; padding:0 2px; line-height:1; font-family:inherit; flex-shrink:0; }
-.log-toggle-btn { font-size:11px; color:var(--accent3); cursor:pointer; background:none; border:none; font-family:inherit; padding:0; margin-top:4px; display:inline-block; }
-.log-form { margin-top:6px; background:var(--bg2); border-radius:var(--radius-md); padding:8px 10px; }
-.log-form-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
-.log-fields { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
-.log-field { display:flex; flex-direction:column; gap:3px; }
-.log-field label { font-size:11px; color:var(--text3); }
-.log-field input,.log-field textarea { padding:6px 8px; border-radius:var(--radius-md); border:1px solid var(--border2); background:var(--bg); color:var(--text); font-size:13px; font-family:inherit; }
-.log-field input:focus,.log-field textarea:focus { outline:none; border-color:var(--accent); }
-.log-field.full { grid-column:1 / -1; }
-.log-field textarea { resize:none; height:52px; font-size:12px; }
-.log-actions { display:flex; gap:8px; }
-.log-save-btn { padding:6px 16px; border-radius:var(--radius-md); border:none; background:var(--accent); color:#fff; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; }
-.log-save-btn:hover { opacity:0.85; }
-.log-cancel-btn { padding:6px 12px; border-radius:var(--radius-md); border:1px solid var(--border2); background:none; color:var(--text2); font-size:13px; cursor:pointer; font-family:inherit; }
+  /* ============ RESET / TOKENS ============ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border-radius: 0 !important; }
 
-footer { margin-top:3rem; text-align:center; font-size:12px; color:var(--text3); }
+  /* ============ TYPE UTILITIES ============ */
+  h1, h2, h3 { font-weight: 800; text-transform: uppercase; line-height: 1.05; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .inverted :focus-visible, .day-primary :focus-visible { outline-color: var(--paper); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+
+  /* ============ MASTHEAD ============ */
+  .masthead { border-bottom: 4px solid var(--ink); padding: 28px 0 20px; }
+  .masthead .block-id {
+    font-size: 11px; letter-spacing: 0.2em; font-weight: 700;
+    border: var(--rule2); display: inline-block; padding: 3px 10px; margin-bottom: 18px;
+  }
+  .masthead h1 {
+    font-size: clamp(30px, 8vw, 72px);
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    word-spacing: 0.05em;
+  }
+  .masthead .subline {
+    font-size: clamp(13px, 2.5vw, 17px);
+    font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    border-top: var(--rule2); border-bottom: var(--rule2);
+    padding: 8px 0; margin-bottom: 12px;
+  }
+  .masthead .meta { font-size: 12px; color: var(--g3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .masthead .meta span { white-space: nowrap; }
+  .masthead .meta span + span::before { content: "· "; color: var(--g9); }
+
+  /* ============ STICKY NAV ============ */
+  .topnav {
+    position: sticky; top: var(--mainbar-h); z-index: 50;
+    background: var(--paper);
+    border-bottom: var(--rule);
+  }
+  .topnav .nav-inner {
+    display: flex; align-items: stretch;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .topnav .nav-inner::-webkit-scrollbar { display: none; }
+  .topnav a {
+    flex: 0 0 auto;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    text-decoration: none;
+    padding: 12px 14px;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -3px;
+  }
+  .topnav a:hover { border-bottom-color: var(--ink); }
+  .topnav a.active { background: var(--ink); color: var(--paper); }
+  .topnav .nav-tools { margin-left: auto; display: flex; align-items: stretch; }
+  .topnav button {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    background: var(--paper); color: var(--ink);
+    border: 0; border-left: var(--rule2);
+    padding: 12px 14px; cursor: pointer; white-space: nowrap;
+  }
+  .topnav button:hover { background: var(--ink); color: var(--paper); }
+
+  /* ============ SECTIONS / TABS ============ */
+  section { padding: 40px 0 48px; border-bottom: 4px solid var(--ink); }
+  main > section.tab-hidden { display: none; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; }
+  .sec-head .sec-num {
+    font-size: clamp(28px, 6vw, 44px); font-weight: 800; color: var(--gc);
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .sec-head h2 {
+    font-size: clamp(20px, 5vw, 34px);
+    letter-spacing: 0.02em;
+  }
+  .lede { max-width: 68ch; margin-bottom: 18px; color: var(--g1); }
+  .smallnote { font-size: 12px; color: var(--g6); max-width: 68ch; }
+
+  /* ============ RULES LIST (overview) ============ */
+  .rules { border-top: var(--rule2); margin-top: 24px; }
+  .rule-item {
+    display: grid; grid-template-columns: 64px 1fr; gap: 0 16px;
+    border-bottom: var(--rule2); padding: 14px 0;
+  }
+  .rule-item .rule-no {
+    font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -0.03em;
+  }
+  .rule-item h3 { font-size: 14px; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .rule-item p { font-size: 13px; color: var(--g3); max-width: 62ch; }
+
+  .handoff {
+    border: var(--rule2); padding: 12px 14px; margin: 18px 0 0;
+    font-size: 12px; letter-spacing: 0.04em; line-height: 1.9;
+  }
+  .handoff .now { background: var(--ink); color: var(--paper); padding: 1px 6px; font-weight: 700; }
+  .handoff .next { color: var(--g6); }
+  .handoff .arrow { color: var(--g9); padding: 0 2px; }
+
+  /* ============ TABLES ============ */
+  .tablewrap { overflow-x: auto; border: var(--rule2); margin: 16px 0 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px; }
+  caption {
+    text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; padding: 10px 12px; border-bottom: var(--rule2);
+    background: var(--paper);
+  }
+  th, td { border: 1px solid var(--ink); padding: 8px 12px; text-align: left; vertical-align: top; }
+  thead th {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    border-bottom: var(--rule2); background: var(--gf);
+  }
+  td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.setrep { font-weight: 700; white-space: nowrap; }
+  tbody th[scope="row"] { font-weight: 700; }
+
+  /* ============ SIGNAL CALLOUTS — the ONLY color on the page ============ */
+  .signal {
+    border: var(--rule2);
+    border-left: 8px solid var(--signal);
+    padding: 14px 16px;
+    margin: 20px 0 0;
+    max-width: 74ch;
+  }
+  .signal .tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--signal);
+    border-bottom: 2px solid var(--signal);
+    padding-bottom: 2px; margin-bottom: 8px;
+  }
+  .signal p { font-size: 13px; }
+  .signal strong { text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* mono callout (non-safety) */
+  .callout {
+    border: var(--rule2); padding: 14px 16px; margin: 20px 0 0; max-width: 74ch;
+  }
+  .callout .tag {
+    display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; border-bottom: 2px solid var(--ink);
+    padding-bottom: 2px; margin-bottom: 8px;
+  }
+  .callout p { font-size: 13px; }
+
+  /* ============ DAY CARDS ============ */
+  .day { border: var(--rule); margin-top: 18px; background: var(--paper); }
+  .day summary {
+    list-style: none; cursor: pointer;
+    display: grid;
+    grid-template-columns: minmax(64px, auto) 1fr auto;
+    gap: 0 18px; align-items: center;
+    padding: 14px 16px;
+  }
+  .day summary::-webkit-details-marker { display: none; }
+  .day summary:hover { background: var(--gf); }
+  .day .day-glyph {
+    font-size: clamp(28px, 6vw, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+  }
+  .day .day-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .day .day-sub { font-size: 11px; color: var(--g6); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .day .day-marker { font-size: 16px; font-weight: 700; }
+  .day[open] .day-marker::before { content: "×"; }
+  .day:not([open]) .day-marker::before { content: "▸"; }
+  .day .day-body { border-top: var(--rule2); padding: 0 16px 18px; }
+  .day .day-note { font-size: 12px; color: var(--g3); padding-top: 12px; max-width: 70ch; }
+
+  /* TUESDAY — the centerpiece: full inversion */
+  .day-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .day-primary summary:hover { background: var(--g1); }
+  .day-primary .day-sub { color: var(--gc); }
+  .day-primary .day-badge {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.2em;
+    border: 2px solid var(--paper); padding: 2px 8px; margin-left: 10px;
+    vertical-align: middle; white-space: nowrap;
+  }
+  .day-primary .day-body { border-top: 2px solid var(--paper); }
+  .day-primary .day-note { color: var(--gc); }
+  .day-primary .tablewrap { border-color: var(--paper); }
+  .day-primary table th, .day-primary table td { border-color: var(--paper); }
+  .day-primary thead th { background: var(--paper); color: var(--ink); border-bottom: 2px solid var(--paper); }
+  .day-primary caption { background: var(--ink); color: var(--paper); border-bottom: 2px solid var(--paper); }
+
+  /* ============ PROGRESSION ENGINES ============ */
+  .engines { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  @media (max-width: 640px) { .engines { grid-template-columns: 1fr; } }
+  .engine { border: var(--rule); padding: 16px; }
+  .engine .engine-no {
+    font-size: clamp(28px, 6vw, 44px); font-weight: 800; line-height: 1; letter-spacing: -0.03em;
+  }
+  .engine h3 { font-size: 14px; letter-spacing: 0.1em; margin-top: 10px; }
+  .engine .engine-sub {
+    display: block; font-size: 11px; color: var(--g6);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px;
+  }
+  .engine .steps-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    margin-top: 16px;
+  }
+  .engine ol {
+    list-style: none; counter-reset: step; margin-top: 8px; border-top: var(--rule2);
+  }
+  .engine ol li {
+    counter-increment: step;
+    display: grid; grid-template-columns: 28px 1fr; gap: 0 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--ink); font-size: 13px;
+  }
+  .engine ol li::before { content: counter(step, decimal-leading-zero); font-weight: 800; }
+  .engine ul { list-style: none; margin-top: 16px; }
+  .engine ul li {
+    display: grid; grid-template-columns: 18px 1fr; gap: 0 10px;
+    padding: 6px 0; font-size: 13px; color: var(--g1);
+  }
+  .engine ul li::before { content: "▸"; font-weight: 700; }
+
+  /* ============ RECOVERY ============ */
+  .two-rules { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  @media (max-width: 640px) { .two-rules { grid-template-columns: 1fr; } }
+  .levers { border-top: var(--rule2); margin-top: 24px; }
+  .lever {
+    display: grid; grid-template-columns: 24px 1fr; gap: 0 14px;
+    border-bottom: 1px solid var(--ink); padding: 12px 0;
+  }
+  .lever .mark { font-weight: 800; }
+  .lever h3 { font-size: 13px; letter-spacing: 0.08em; margin-bottom: 2px; }
+  .lever p { font-size: 12px; color: var(--g3); max-width: 64ch; }
+
+  /* ============ DELOAD CHECKLIST ============ */
+  .check-counter {
+    font-size: clamp(28px, 7vw, 48px); font-weight: 800; letter-spacing: -0.02em;
+    border: var(--rule); display: inline-block; padding: 6px 18px; margin: 6px 0 20px;
+    font-variant-numeric: tabular-nums;
+  }
+  .checklist { list-style: none; border-top: var(--rule2); }
+  .checklist li { border-bottom: 1px solid var(--ink); }
+  .checklist label {
+    display: grid; grid-template-columns: 26px 1fr; gap: 0 16px; align-items: start;
+    padding: 14px 4px; cursor: pointer; font-size: 13px;
+  }
+  .checklist label:hover { background: var(--gf); }
+  .checklist input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px; border: 3px solid var(--ink);
+    cursor: pointer; display: grid; place-content: center;
+    background: var(--paper); margin-top: -1px;
+  }
+  .checklist input[type="checkbox"]:checked { background: var(--ink); }
+  .checklist input[type="checkbox"]:checked::after {
+    content: "×"; color: var(--paper); font-family: var(--mono);
+    font-size: 16px; font-weight: 800; line-height: 1;
+  }
+  .checklist input:checked + span { text-decoration: line-through; color: var(--g6); }
+
+  /* ============ FOOTER ============ */
+  .site-footer { padding: 32px 0 60px; }
+  .site-footer p {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .site-footer .foot-rule { border-top: var(--rule); margin-bottom: 16px; }
+
+  /* ============ MOTION ============ */
+  .topnav a, .topnav button, .day summary, .checklist label, .checklist input { transition: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .topnav a, .topnav button { transition: background-color 80ms linear, color 80ms linear; }
+  }
+
+  /* ============ PRINT — flip back to light for paper ============ */
+  @media print {
+    --ink: #000; --paper: #fff;
+    --g1: #111; --g3: #333; --g6: #666; --g9: #999;
+    --gc: #ccc; --ge: #e5e5e5; --gf: #f2f2f2;
+    .topnav { display: none; }
+    main > section { display: block !important; }
+    font-size: 11px;
+    section { border-bottom: 2px solid #000; padding: 18px 0; page-break-inside: auto; }
+    .day, .tablewrap, .signal, .callout { page-break-inside: avoid; }
+    .day summary .day-marker { display: none; }
+    table { min-width: 0; }
+    .tablewrap { overflow-x: visible; }
+    .day-primary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+}
+
+/* ============================================================
+   APP 2 — SKILLWORK (guard trainer)
+   Original monochrome brutalism, locked to dark.
+   ============================================================ */
+#app-skill {
+  --bg: #0A0A0A;
+  --ink: #FFFFFF;
+  --muted: #909090;
+  --hairline: rgba(255,255,255,.22);
+  --wash: #1C1C1C;
+  --mono: ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 64px;
+
+  * { box-sizing: border-box; margin: 0; padding: 0; border-radius: 0; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  /* ---------- sticky header ---------- */
+  .top {
+    position: sticky; top: var(--mainbar-h); z-index: 50;
+    background: var(--bg);
+    border-bottom: 2px solid var(--ink);
+  }
+  .top-inner { max-width: 600px; margin: 0 auto; padding: 14px 20px 0; }
+  .brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .brand { font-weight: 900; letter-spacing: .06em; font-size: 13px; text-transform: uppercase; }
+  .brand em { font-style: normal; background: var(--ink); color: var(--bg); padding: 1px 5px; }
+  .statstrip { display: flex; gap: 14px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .statstrip b { color: var(--ink); font-weight: 700; }
+
+  /* tabs — uppercase; active = inverted block */
+  .tabs { display: flex; margin-top: 12px; }
+  .tab {
+    flex: 1; padding: 10px 2px; text-align: center;
+    font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+
+  /* week selector — squares; active = inverted */
+  .weekbar {
+    max-width: 600px; margin: 0 auto; padding: 10px 20px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .weekbar .wklabel { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+  .wkpills { display: flex; gap: 4px; }
+  .wk {
+    width: 36px; height: 36px;
+    font-family: var(--mono); font-size: 13px; color: var(--muted);
+    border: 1.5px solid transparent;
+  }
+  .wk[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 700; }
+  .wkname { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .1em; margin-left: auto; }
+
+  /* ---------- layout: boxless sections ---------- */
+  main { max-width: 600px; margin: 0 auto; padding: 26px 20px 0; }
+  section[hidden] { display: none; }
+  .card { margin-bottom: 48px; }
+  h2 { font-size: 15.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+  .sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .eyebrow {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin: 24px 0 8px;
+  }
+  .eyebrow:first-child { margin-top: 0; }
+  .eyebrow.active { color: var(--ink); }
+  .note { font-size: 13.5px; color: var(--muted); }
+  .callout {
+    border-left: 4px solid var(--ink);
+    padding: 2px 0 2px 14px; font-size: 13.5px; color: var(--muted); margin-top: 14px;
+  }
+  .callout b { color: var(--ink); }
+
+  /* week focus line atop each domain tab */
+  .focus {
+    display: flex; gap: 12px; align-items: baseline; font-size: 14px;
+    margin-bottom: 30px; color: var(--muted);
+  }
+  .focus .fw { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+
+  /* ---------- drill rows (no checkboxes — the timer marks them) ---------- */
+  .drill {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 44px; padding: 5px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .drill:last-child { border-bottom: none; }
+  .drill .mark {
+    width: 16px; flex: none; text-align: center;
+    font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--muted);
+  }
+  .drill.done .mark { color: var(--ink); }
+  .drill .dname { flex: 1; font-size: 14.5px; }
+  .drill .dnote { display: block; font-size: 12px; color: var(--muted); }
+  .drill.done .dname { color: var(--muted); text-decoration: line-through; }
+
+  /* dose — plain mono text */
+  .dose {
+    flex: none; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
+    padding: 8px 0 8px 12px; white-space: nowrap; color: var(--muted);
+  }
+
+  /* buttons — solid ink or hard outline */
+  .btn {
+    display: block; width: 100%; min-height: 46px; margin-top: 16px;
+    font-weight: 800; font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+    background: var(--ink); color: var(--bg);
+  }
+  .btn:active { opacity: .75; }
+  .btn.ghost { background: var(--bg); color: var(--ink); border: 2px solid var(--ink); }
+  .btnrow { display: flex; gap: 10px; }
+  .btnrow .btn { margin-top: 16px; }
+
+  /* ---------- Today priority list ---------- */
+  .prio { margin-bottom: 36px; }
+  .tag {
+    display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .14em;
+    text-transform: uppercase; margin-bottom: 5px; margin-right: 10px;
+  }
+  .tag.must { color: var(--ink); border-bottom: 2px solid var(--ink); padding-bottom: 1px; }
+  .tag.iftime { color: var(--muted); }
+  .tag.done { color: var(--ink); }
+  .prio h3 { font-size: 15.5px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
+  .prio .mins { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .prio p { font-size: 13.5px; color: var(--muted); margin-top: 5px; }
+
+  /* free-throw pressure set — solid = make, outline = miss */
+  .fttally { display: flex; gap: 5px; margin: 16px 0 2px; }
+  .ftdot { flex: 1; height: 10px; background: var(--wash); border: 1px solid var(--hairline); }
+  .ftdot.make { background: var(--ink); border-color: var(--ink); }
+  .ftdot.miss { background: var(--bg); border: 1.5px solid var(--ink); }
+  .ftmsg { font-family: var(--mono); font-size: 12.5px; min-height: 20px; margin-top: 10px; color: var(--muted); }
+  .ftmsg.ok { color: var(--ink); font-weight: 700; } .ftmsg.no { color: var(--ink); }
+  .btn.make { background: var(--ink); color: var(--bg); }
+  .btn.miss { background: var(--bg); color: var(--ink); border: 2px solid var(--ink); }
+
+  /* defensive log */
+  textarea {
+    width: 100%; background: var(--bg); border: 2px solid var(--ink);
+    color: var(--ink); padding: 11px 13px; font: inherit;
+  }
+  textarea::placeholder { color: var(--muted); }
+  .logentry { border-bottom: 1px solid var(--hairline); padding: 12px 0; font-size: 14px; }
+  .logentry:last-child { border-bottom: none; }
+  .logentry time { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 3px; }
+  .logentry .del { float: right; color: var(--muted); font-size: 12px; padding: 2px 6px; text-decoration: underline; }
+
+  /* collapsible */
+  details { border-top: 2px solid var(--ink); padding-top: 16px; }
+  summary { cursor: pointer; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; list-style: none; display: flex; align-items: center; gap: 10px; }
+  summary::before { content: '+'; font-family: var(--mono); font-size: 15px; }
+  details[open] summary::before { content: '–'; }
+  details > *:not(summary) { margin-top: 10px; }
+
+  /* generated step blocks need their own gap (eyebrow margin is zeroed as first-child) */
+  #shootSteps > div + div { margin-top: 24px; }
+
+  /* lists — square bullets */
+  .plainlist { font-size: 14px; list-style: none; }
+  .plainlist li { margin: 7px 0; padding-left: 16px; position: relative; color: var(--ink); }
+  .plainlist li::before { content: '■'; position: absolute; left: 0; top: .42em; font-size: 6px; color: var(--ink); }
+  .plainlist li b { color: var(--ink); font-weight: 700; }
+
+  /* ---------- timer overlay — the signature moment ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 200; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; text-align: center;
+  }
+  .overlay[hidden] { display: none; }
+  .t-seg { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink); margin-bottom: 10px; min-height: 20px; }
+  .t-time {
+    font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: min(30vw,150px); line-height: 1; color: var(--ink); letter-spacing: -.03em;
+  }
+  .t-next { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 16px; min-height: 18px; }
+  .t-prog { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--ink); margin-top: 5px; }
+  .t-controls { display: flex; gap: 10px; margin-top: 40px; width: 100%; max-width: 360px; }
+  .t-controls .btn { margin-top: 0; }
+  .t-auto { margin-top: 22px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 9px; }
+  .chk {
+    width: 22px; height: 22px; flex: none;
+    border: 2px solid var(--ink);
+    display: grid; place-items: center; color: transparent; font-size: 12px; font-weight: 700;
+  }
+  .chk[aria-checked="true"] { background: var(--ink); color: var(--bg); }
+  .t-close { position: absolute; top: 18px; right: 18px; color: var(--ink); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 10px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="app-header">
-    <h1>Henry's Training Program</h1>
-    <p>Month 3 · Fresh Start June 5, 2026 · Tap any exercise or day to expand</p>
-  </div>
 
-  <div class="view-toggle">
-    <button class="view-btn active" id="btn-pf" onclick="setView('pf')">Planet Fitness — Month 3</button>
-    <button class="view-btn" id="btn-bw" onclick="setView('bw')">Bodyweight / Vacation</button>
-  </div>
+<!-- ============ MAIN TABS ============ -->
+<header class="mainbar" role="tablist" aria-label="Training mode">
+  <button class="mainbar-tab" role="tab" data-app="lift" aria-selected="true">Lifting</button>
+  <button class="mainbar-tab" role="tab" data-app="skill" aria-selected="false">Skillwork</button>
+</header>
 
-  <div id="pf-banner" class="banner banner-blue">
-    <strong>Planet Fitness — Belmont, NC</strong><br>
-    Equipment: 2 squat racks · Full dumbbell rack · Cable machines · Lat pulldown · Graviton assisted pull-up · Leg press/extension/curl · Smith machines · Calf machines.<br>
-    <strong>Note:</strong> No power cleans (lunk alarm). Power movement = <em>Trap Bar Deadlift (explosive)</em>. No trap bar → Barbell Speed Squat @ 60% 1RM, max bar speed.
-  </div>
+<!-- ############################################################
+     APP 1 — LIFTING
+     ############################################################ -->
+<div id="app-lift">
 
-  <div id="bw-banner" class="banner banner-green" style="display:none">
-    <strong>Bodyweight / Vacation Program — 6 Days</strong><br>
-    No equipment required. Day 6 is a standalone intense core circuit — add it to any day as a finisher or run it alone.<br>
-    <strong>Pull-up bar note:</strong> On Day 3, if a bar is available (hotel gym, park, door frame), replace table rows with Pull-Ups 4×max + Chin-Ups 3×max.
+<!-- ============ 1. MASTHEAD ============ -->
+<header class="masthead">
+  <div class="wrap">
+    <span class="block-id">TRAINING ARTIFACT / 001</span>
+    <h1>Block 1 —<br>Strength +<br>Tendon Capacity</h1>
+    <p class="subline">4 WEEKS · ULPPL · 5 DAYS · 45–60 MIN · FULL GYM</p>
+    <p class="meta">
+      <span>Lead quality: strength + tendon</span>
+      <span>Lean bulk</span>
+      <span>Patellar-tendon safe</span>
+    </p>
   </div>
+</header>
 
-  <!-- PF Controls -->
-  <div id="pf-controls">
-    <div class="week-tabs" id="week-tabs"></div>
-    <div id="week-note" class="week-note"></div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#c07af0"></div>Tri-set</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#185fa5"></div>Outdoor/school</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#1a9e6e"></div>Core (do anytime)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e07b2a"></div>PAP/jump note</div>
+<!-- ============ 2. STICKY NAV ============ -->
+<nav class="topnav" aria-label="Sections">
+  <div class="wrap nav-inner">
+    <a href="#overview">Overview</a>
+    <a href="#split">Week Split</a>
+    <a href="#knee">Knee Protocol</a>
+    <a href="#lifts">Lifts</a>
+    <a href="#arc">4-Week Arc</a>
+    <a href="#progress">Progression</a>
+    <a href="#recovery">Recovery</a>
+    <a href="#deload">Deload Test</a>
+    <div class="nav-tools">
+      <button type="button" id="toggle-all" aria-pressed="false">Expand All</button>
     </div>
   </div>
+</nav>
 
-  <div class="day-grid" id="day-grid"></div>
-  <footer id="footer">Month 3 · Planet Fitness · Log weights · Test vertical on deload week</footer>
+<main>
+
+<!-- ============ 3. OVERVIEW ============ -->
+<section id="overview">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">01</span><h2>Overview</h2></div>
+    <p class="lede">First block in a sequence, not do-everything-at-once. Each 4-week block has one <strong>LEAD QUALITY</strong> that hands to the next. Block 1 leads with strength + tendon because jumping is the biggest knee aggravator (build the tendon before hammering it), heavy strength drives everything later, and it front-loads overall strength and the lean bulk. Jump work stays low and quality-focused — building the spring, not using it hard yet.</p>
+
+    <div class="handoff" aria-label="Block sequence">
+      <span class="now">BLOCK 1 (NOW) — STRENGTH + TENDON CAPACITY</span><span class="arrow"> → </span><span class="next">BLOCK 2 — STRENGTH-SPEED / POWER</span><span class="arrow"> → </span><span class="next">BLOCK 3 — SPEED-STRENGTH / REACTIVE (PEAK + JUMP TEST)</span>
+    </div>
+
+    <div class="rules">
+      <div class="rule-item">
+        <span class="rule-no" aria-hidden="true">1</span>
+        <div>
+          <h3>One Stress Budget</h3>
+          <p>Lifting, jumps, court all draw the same recovery account. Group hard days, protect easy ones.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-no" aria-hidden="true">2</span>
+        <div>
+          <h3>Order by Nervous-System Demand</h3>
+          <p>Explosive work when fresh; never jumps/heavy power at the end of a session or after a leg-trashing day.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-no" aria-hidden="true">3</span>
+        <div>
+          <h3>Strength Is the Base of the Jump</h3>
+          <p>The squat IS jump training; heavy lower work + jumps share the day, connected by intent.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. WEEKLY SPLIT ============ -->
+<section id="split">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">02</span><h2>Weekly Split</h2></div>
+    <div class="tablewrap">
+      <table>
+        <caption>Mon–Fri structure</caption>
+        <thead>
+          <tr><th scope="col">Day</th><th scope="col">Focus</th><th scope="col">Jump / Power</th><th scope="col">Court / Speed</th><th scope="col">CNS Load</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">MON</th><td>Upper (chest+back+shoulders+arms)</td><td>—</td><td>legs fresh → best day for speed/court</td><td class="num">Low</td></tr>
+          <tr><th scope="row">TUE</th><td><strong>LOWER POWER + JUMP (primary)</strong></td><td>low-vol plyo → squat (PAP) → trap-bar jump</td><td>keep court light today</td><td class="num"><strong>HIGH</strong></td></tr>
+          <tr><th scope="row">WED</th><td>Push (chest+shoulders+triceps)</td><td>—</td><td>legs recovered → 2nd-best speed/court day</td><td class="num">Low</td></tr>
+          <tr><th scope="row">THU</th><td>Pull (back day + biceps)</td><td>light pogos only</td><td>light only</td><td class="num">Low</td></tr>
+          <tr><th scope="row">FRI</th><td>Legs (single-leg + posterior)</td><td>light reactive dose</td><td>—</td><td class="num">Mod</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="smallnote" style="margin-top:14px">Note: court skill work is near-daily and mostly low intensity — fine. Keep the HARDEST court sessions off Tuesday; don't stack a max court day on Friday legs.</p>
+  </div>
+</section>
+
+<!-- ============ 5. KNEE PROTOCOL ============ -->
+<section id="knee">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">03</span><h2>Knee Protocol</h2></div>
+    <p class="lede">Daily non-negotiable. Isometrics relieve pain (~45 min analgesia) and build the tendon stiffness that protects the knee AND powers the jump. Light version daily; full version before Tue/Fri and hard court days.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Daily isometrics</caption>
+        <thead>
+          <tr><th scope="col">Exercise</th><th scope="col">Hold</th><th scope="col">Daily</th><th scope="col">Pre-Tue/Fri/Court</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Spanish Squat ISO (band behind knees, shins vertical)</th><td class="num">45s</td><td class="num">2 sets</td><td class="num">4–5 sets</td></tr>
+          <tr><th scope="row">Single-Leg Wall Sit</th><td class="num">45s/leg</td><td class="num">2 sets</td><td class="num">3 sets</td></tr>
+          <tr><th scope="row">Split-Squat ISO (back knee 1&quot; off floor)</th><td class="num">45s/leg</td><td class="num">2 sets</td><td class="num">3 sets</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="signal" role="note">
+      <span class="tag">Pain Rule</span>
+      <p><strong>0–3/10</strong> during and after = green light. <strong>&gt;5/10</strong> = reduce depth/load. Rising pain across days = pull back jump volume before it becomes a setback.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. THE LIFTS ============ -->
+<section id="lifts">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">04</span><h2>The Lifts</h2></div>
+    <p class="lede">Same exercises all 4 weeks; load/sets/RIR change per the arc.</p>
+
+    <!-- MON -->
+    <details class="day" id="day-mon">
+      <summary aria-expanded="false">
+        <span class="day-glyph" aria-hidden="true">MON</span>
+        <span>
+          <span class="day-title">Upper</span>
+          <span class="day-sub" style="display:block">Chest + back + shoulders + arms</span>
+        </span>
+        <span class="day-marker" aria-hidden="true"></span>
+      </summary>
+      <div class="day-body">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Incline Barbell Press</td><td class="setrep">4 × 6–10</td><td>Upper-chest priority</td></tr>
+              <tr><td class="num">2</td><td>Barbell Bent-Over Row</td><td class="setrep">4 × 6–10</td><td>Horizontal thickness, full ROM</td></tr>
+              <tr><td class="num">3</td><td>Weighted Pull-Up / Lat Pulldown</td><td class="setrep">3 × 8–12</td><td>Vertical / width</td></tr>
+              <tr><td class="num">4</td><td>Overhead Press</td><td class="setrep">3 × 6–10</td><td>Compound press, contact strength</td></tr>
+              <tr><td class="num">5</td><td>Tri-set: OH Triceps Ext · Incline DB Curl · Lateral Raise</td><td class="setrep">3 × 10–15</td><td>Last set of each near failure</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- TUE — CENTERPIECE -->
+    <details class="day day-primary" id="day-tue" open>
+      <summary aria-expanded="true">
+        <span class="day-glyph" aria-hidden="true">TUE</span>
+        <span>
+          <span class="day-title">Lower Power + Jump<span class="day-badge">Centerpiece</span></span>
+          <span class="day-sub" style="display:block">Order: knee ISO primer → dynamic prep → plyo (fresh) → strength</span>
+        </span>
+        <span class="day-marker" aria-hidden="true"></span>
+      </summary>
+      <div class="day-body">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Plyo (landings + extensive)</td><td class="setrep">~40–60 contacts</td><td>Pogos, line hops, low box jumps stepping down, snapdown-to-stick. Crisp, silent, max intent.</td></tr>
+              <tr><td class="num">2</td><td>Back Squat</td><td class="setrep">4 × 4–6</td><td>#1 strength/jump driver. Heavy, fast concentric, never to failure.</td></tr>
+              <tr><td class="num">3</td><td>Trap-Bar Jump</td><td class="setrep">4 × 3</td><td>Max bar speed. Main power expression.</td></tr>
+              <tr><td class="num">4</td><td>Hang Clean (technical reintro)</td><td class="setrep">3 × 3</td><td>Light, rebuild pattern. Skip if form/knee off — trap-bar jump covers it.</td></tr>
+              <tr><td class="num">5</td><td>Romanian Deadlift</td><td class="setrep">3 × 8–10</td><td>Posterior chain, loaded stretch</td></tr>
+              <tr><td class="num">6</td><td>Standing Calf + Tib Raise</td><td class="setrep">3 × 12–15</td><td>Ankle stiffness = force transfer</td></tr>
+              <tr><td class="num">7</td><td>Pallof Press</td><td class="setrep">3 × 10/side</td><td>Trunk anti-rotation</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- WED -->
+    <details class="day" id="day-wed">
+      <summary aria-expanded="false">
+        <span class="day-glyph" aria-hidden="true">WED</span>
+        <span>
+          <span class="day-title">Push</span>
+          <span class="day-sub" style="display:block">Chest + shoulders + triceps</span>
+        </span>
+        <span class="day-marker" aria-hidden="true"></span>
+      </summary>
+      <div class="day-body">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Incline DB Press</td><td class="setrep">4 × 8–12</td><td>Angle rotation vs Monday</td></tr>
+              <tr><td class="num">2</td><td>Flat DB Press or Dips</td><td class="setrep">3 × 8–12</td><td>Mid/lower chest</td></tr>
+              <tr><td class="num">3</td><td>Low-to-High Cable Flye</td><td class="setrep">3 × 12–15</td><td>Upper-chest iso, failure last set</td></tr>
+              <tr><td class="num">4</td><td>Lateral Raise</td><td class="setrep">3 × 12–20</td><td>Failure last set</td></tr>
+              <tr><td class="num">5</td><td>Skull Crusher + Pushdown</td><td class="setrep">3 × 10–15</td><td>Failure last set</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- THU -->
+    <details class="day" id="day-thu">
+      <summary aria-expanded="false">
+        <span class="day-glyph" aria-hidden="true">THU</span>
+        <span>
+          <span class="day-title">Pull</span>
+          <span class="day-sub" style="display:block">Back day + biceps · hit all 4 planes</span>
+        </span>
+        <span class="day-marker" aria-hidden="true"></span>
+      </summary>
+      <div class="day-body">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Plane</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Heavy Barbell / DB Row</td><td class="setrep">4 × 6–10</td><td>Horizontal (thickness)</td></tr>
+              <tr><td class="num">2</td><td>Weighted Pull-Up</td><td class="setrep">3 × 6–10</td><td>Vertical (width)</td></tr>
+              <tr><td class="num">3</td><td>Single-Arm DB Row / Straight-Arm Pulldown</td><td class="setrep">3 × 10–15</td><td>Stretch, near failure</td></tr>
+              <tr><td class="num">4</td><td>Face Pull / Rear Delt Flye</td><td class="setrep">3 × 15–20</td><td>Scapular / rear delt</td></tr>
+              <tr><td class="num">5</td><td>EZ-Bar / Incline DB Curl</td><td class="setrep">3 × 10–15</td><td>Biceps, failure last set</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- FRI -->
+    <details class="day" id="day-fri">
+      <summary aria-expanded="false">
+        <span class="day-glyph" aria-hidden="true">FRI</span>
+        <span>
+          <span class="day-title">Legs</span>
+          <span class="day-sub" style="display:block">Single-leg lead + posterior · warm-up: knee ISO + stability</span>
+        </span>
+        <span class="day-marker" aria-hidden="true"></span>
+      </summary>
+      <div class="day-body">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Bulgarian Split Squat (leads)</td><td class="setrep">3 × 6–8</td><td>Single-leg force + deep loaded stretch</td></tr>
+              <tr><td class="num">2</td><td>Trap-Bar Deadlift (explosive)</td><td class="setrep">3 × 3–5</td><td>Hip-drive power</td></tr>
+              <tr><td class="num">3</td><td>Nordic / Leg Curl</td><td class="setrep">3 × 6–10</td><td>Slow eccentric — hamstring + braking</td></tr>
+              <tr><td class="num">4</td><td>Lateral Lunge / Cossack Squat</td><td class="setrep">3 × 8/side</td><td>Frontal-plane strength for cuts</td></tr>
+              <tr><td class="num">5</td><td>Seated Calf Raise</td><td class="setrep">3 × 12–20</td><td>Soleus</td></tr>
+              <tr><td class="num">6</td><td>Light reactive (optional) + anti-flexion core</td><td class="setrep">knee-gated</td><td>Only if knee pain held ≤3/10 all week</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============ 7. 4-WEEK ARC ============ -->
+<section id="arc">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">05</span><h2>4-Week Arc</h2></div>
+    <div class="tablewrap">
+      <table>
+        <caption>RIR / contacts arc</caption>
+        <thead>
+          <tr><th scope="col">Week</th><th scope="col">Compounds</th><th scope="col">Isolations</th><th scope="col">Jump Contacts</th><th scope="col">Intent</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row" class="num">1</th><td class="num">3–4 RIR</td><td class="num">1–2 RIR</td><td>~40–50 (landings)</td><td>Groove pattern, rebuild strength</td></tr>
+          <tr><th scope="row" class="num">2</th><td class="num">2–3 RIR</td><td class="num">1–2 RIR</td><td>~50–60 (add low box)</td><td>Add load / reps</td></tr>
+          <tr><th scope="row" class="num">3</th><td class="num">0–1 RIR (PR attempt)</td><td>last set to failure</td><td>~60 (crisp only)</td><td>Peak strength stimulus</td></tr>
+          <tr><th scope="row" class="num">4</th><td class="num">4–5 RIR (−40–50%)</td><td class="num">3–4 RIR</td><td>~30 + TEST</td><td>Deload, shed fatigue, retest</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="signal" role="note">
+      <span class="tag">Failure Rule</span>
+      <p>Compounds <strong>NEVER</strong> to failure (more fatigue, no extra growth); isolations' last set to technical failure.</p>
+    </div>
+    <div class="signal" role="note">
+      <span class="tag">Knee Gate</span>
+      <p>Only add jump intensity next week if pain stayed <strong>≤3/10</strong> and landings were silent. The lift can keep progressing even if the jump has to hold.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>Starting load estimates (autoregulate to RIR)</caption>
+        <thead>
+          <tr><th scope="col">Lift</th><th scope="col">W1</th><th scope="col">W2</th><th scope="col">W3 (Peak)</th><th scope="col">W4</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Back Squat</th><td class="num">~205 × 5</td><td class="num">~215 × 5</td><td class="num">~225 × 5 / PR</td><td class="num">135 × 5</td></tr>
+          <tr><th scope="row">Incline BB Press</th><td class="num">~135 × 8</td><td class="num">~140 × 8</td><td class="num">~150 × 6–8 / PR</td><td class="num">95 × 8</td></tr>
+          <tr><th scope="row">Barbell Row</th><td class="num">~155 × 8</td><td class="num">~160 × 8</td><td class="num">~170 × 6–8</td><td class="num">105 × 8</td></tr>
+          <tr><th scope="row">Trap-Bar Jump</th><td class="num">~135 × 3 fast</td><td class="num">~155 × 3</td><td class="num">~185 × 3</td><td class="num">light</td></tr>
+          <tr><th scope="row">RDL</th><td class="num">~155 × 8</td><td class="num">~165 × 8</td><td class="num">~175 × 8</td><td class="num">95 × 8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. HOW TO PROGRESS ============ -->
+<section id="progress">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">06</span><h2>How to Progress</h2></div>
+    <p class="lede">Two separate progression engines run at once — never let the jump engine borrow the aggressiveness of the lift engine.</p>
+
+    <div class="engines">
+      <div class="engine">
+        <p class="engine-no" aria-hidden="true">01</p>
+        <h3>Engine 1 — Lifts</h3>
+        <span class="engine-sub">Volume / Load</span>
+        <p class="steps-label">Progress in this order</p>
+        <ol>
+          <li>Add reps in range</li>
+          <li>Add load, reset to bottom of range</li>
+          <li>Add a set</li>
+          <li>Drop RIR (closer to failure)</li>
+          <li>Deload + reset</li>
+        </ol>
+        <ul>
+          <li>Load and reps grow muscle equally — bias STRENGTH lifts (squat, incline, row) toward small load jumps; bias isolations toward reps.</li>
+          <li>Smallest increments possible (2.5–5 lb, +1 set). Gains come per block, not per session.</li>
+        </ul>
+      </div>
+      <div class="engine">
+        <p class="engine-no" aria-hidden="true">02</p>
+        <h3>Engine 2 — Jumps / Plyo</h3>
+        <span class="engine-sub">Intent / Quality</span>
+        <ul>
+          <li>Do NOT progress by adding reps or grinding closer to failure.</li>
+          <li>Progress by MORE bar/limb speed at a given load, or advancing the plyo tier — gated by clean, silent landings.</li>
+          <li>Tendons adapt slower than muscle: keep jump progression LAGGING the lifts, always gated by the ≤3/10 knee rule.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="signal" role="note">
+      <span class="tag">Two Engines, One Rule</span>
+      <p>The lifts progress on volume and load; the jumps progress on quality and intent. Never apply lift-progression speed to a tendon — that's how the knee flares.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. RECOVERY & STRETCHING ============ -->
+<section id="recovery">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">07</span><h2>Recovery &amp; Stretching</h2></div>
+
+    <div class="two-rules">
+      <div class="callout">
+        <span class="tag">Timing Rule</span>
+        <p>Static stretching AFTER training or later — never heavy static stretching right before jumping (it briefly lowers the tendon stiffness you want; rebounds within ~10 min). Pre-training stays dynamic; post-training is where stretching lives.</p>
+      </div>
+      <div class="callout">
+        <span class="tag">Emphasis Rule</span>
+        <p>Prioritize hips/quads/hip flexors for length. Go easy chasing calf/Achilles length — you want stiffness there for the spring; mobilize the ankle enough for dorsiflexion, no more.</p>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>A) Post-lift cooldown (~10 min, esp. after Tue &amp; Fri)</caption>
+        <thead>
+          <tr><th scope="col">Movement</th><th scope="col">Duration</th><th scope="col">Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Spanish Squat ISO or Wall Sit (light, pain-free)</th><td class="num">2 × 45s</td><td>Tendon flush + analgesia</td></tr>
+          <tr><th scope="row">Couch stretch</th><td class="num">2–3 min/side</td><td>Mandatory for jumper's knee — hip flexor + quad/patellar tendon</td></tr>
+          <tr><th scope="row">Pigeon pose</th><td class="num">2 min/side</td><td>Decompress hips &amp; glutes</td></tr>
+          <tr><th scope="row">Adductor / frog or Cossack hold</th><td class="num">1–2 min</td><td>Frontal-plane range for cuts</td></tr>
+          <tr><th scope="row">Calf / Achilles (light)</th><td class="num">1 min/side</td><td>30s straight, 30s bent — mobility not max length</td></tr>
+          <tr><th scope="row">Child's pose / lying spinal decompression</th><td class="num">2 min</td><td>Relax lower back</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>B) Post-basketball / post-jump (~8–10 min, knee-first)</caption>
+        <thead>
+          <tr><th scope="col">Movement</th><th scope="col">Duration</th><th scope="col">Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Spanish Squat ISO (priority item)</th><td class="num">2–3 × 45s</td><td>Post-jump tendon analgesia + capacity — first, every jump/court day</td></tr>
+          <tr><th scope="row">Couch stretch</th><td class="num">2–3 min/side</td><td>Hip flexor + quad/tendon</td></tr>
+          <tr><th scope="row">Calf / Achilles (light)</th><td class="num">1 min/side</td><td>Keep dorsiflexion range</td></tr>
+          <tr><th scope="row">Pigeon pose</th><td class="num">2 min/side</td><td>Hips &amp; glutes</td></tr>
+          <tr><th scope="row">90/90 hip switches + hip flexor</th><td class="num">1–2 min</td><td>Restore hip rotation after cutting/landing</td></tr>
+          <tr><th scope="row">Optional: easy bike or walk</th><td class="num">5–10 min</td><td>Zone-1 aerobic flush</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="levers">
+      <div class="lever">
+        <span class="mark" aria-hidden="true">●</span>
+        <div>
+          <h3>Sleep 8+ hrs</h3>
+          <p>#1 lever. Protect hardest in peak Week 3.</p>
+        </div>
+      </div>
+      <div class="lever">
+        <span class="mark" aria-hidden="true">●</span>
+        <div>
+          <h3>Daily knee/joint pain check 0–10</h3>
+          <p>Gates the next session; rising trend = pull back volume.</p>
+        </div>
+      </div>
+      <div class="lever">
+        <span class="mark" aria-hidden="true">●</span>
+        <div>
+          <h3>Honor light days</h3>
+          <p>The week undulates.</p>
+        </div>
+      </div>
+      <div class="lever">
+        <span class="mark" aria-hidden="true">●</span>
+        <div>
+          <h3>Fuel it</h3>
+          <p>Protein across the day, carbs+protein around training (lean bulk).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. WEEK 4 DELOAD / RETEST ============ -->
+<section id="deload">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">08</span><h2>Week 4 — Deload &amp; Retest</h2></div>
+    <p class="lede">Checklist. State is in-memory only — it resets on reload.</p>
+    <p class="check-counter" id="check-counter" aria-live="polite">00 / 06</p>
+    <ul class="checklist" id="checklist">
+      <li><label><input type="checkbox"><span>Standing + approach vertical (fresh) — baseline for Block 2</span></label></li>
+      <li><label><input type="checkbox"><span>Bodyweight</span></label></li>
+      <li><label><input type="checkbox"><span>Est. 1RMs: squat, incline, OHP; pull-up max reps</span></label></li>
+      <li><label><input type="checkbox"><span>Deadlift baseline test (never tested — do it here)</span></label></li>
+      <li><label><input type="checkbox"><span>Knee pain trend across the block (log 0–10 daily)</span></label></li>
+      <li><label><input type="checkbox"><span>Avg soreness per muscle + quick physique note</span></label></li>
+    </ul>
+
+    <div class="callout">
+      <span class="tag">Lean Bulk</span>
+      <p>~+0.25–0.5 lb/week (slow, protect the vertical). Protein ~0.8–1 g/lb (~150–185 g/day). Re-check monthly at the deload; if vertical drops as weight climbs, slow the gain.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-rule"></div>
+    <p>Prototype v1 — meant to be argued with.</p>
+  </div>
+</footer>
+
+</div><!-- /#app-lift -->
+
+<!-- ############################################################
+     APP 2 — SKILLWORK
+     ############################################################ -->
+<div id="app-skill" hidden>
+
+<!-- ================= HEADER ================= -->
+<header class="top">
+  <div class="top-inner">
+    <div class="brandrow">
+      <div class="brand">Skill<em>work</em></div>
+      <div class="statstrip">
+        <span id="stStreak"></span>
+        <span id="stDay"></span>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="today" aria-selected="true">Today</button>
+      <button class="tab" role="tab" data-tab="handle" aria-selected="false">Handle</button>
+      <button class="tab" role="tab" data-tab="shoot" aria-selected="false">Shoot</button>
+      <button class="tab" role="tab" data-tab="defend" aria-selected="false">Defend</button>
+      <button class="tab" role="tab" data-tab="speed" aria-selected="false">Speed</button>
+    </nav>
+  </div>
+  <div class="weekbar">
+    <span class="wklabel">Week</span>
+    <div class="wkpills" id="weekPills"></div>
+    <span class="wkname" id="weekName"></span>
+  </div>
+</header>
+
+<main>
+  <!-- ================= TODAY ================= -->
+  <section id="tab-today" role="tabpanel">
+    <div id="todayCards"></div>
+    <div class="card">
+      <div class="eyebrow">Week controls</div>
+      <p class="note">Advancing moves every tab to the next week of the wave (4 → 1) — or jump straight to any week with the Week selector up top.</p>
+      <button class="btn" id="btnAdvance">Advance to next week</button>
+    </div>
+  </section>
+
+  <!-- ================= BALL HANDLING ================= -->
+  <section id="tab-handle" role="tabpanel" hidden>
+    <div class="focus"><span class="fw" id="hFw"></span><span id="hFocus"></span></div>
+    <p class="note" style="margin:-14px 0 30px">Four 10-minute workouts plus a 5-minute follow-along burnout. Start one — the timer walks every drill and checks it off as you go.</p>
+    <div id="handleWorkouts"></div>
+    <div class="card">
+      <details id="gamecraft">
+        <summary>Game-craft layer — Torin Dorn (@torindorn2)</summary>
+        <p class="note">Unlocks once a workout is completed today. Train the <b style="color:var(--ink)">read</b>, not the rep — every combo ends in a decision: attack, counter, or pull-up.</p>
+        <ul class="plainlist">
+          <li><b>Two-ball series</b> — same-time + alternating pounds, add a walk</li>
+          <li><b>Combo chains into a finish</b> — 2–3 moves, end at the rim every rep</li>
+          <li><b>Pace manipulation</b> — slow-slow-explode; the change of speed is the move</li>
+          <li><b>Cone / chair attack reads</b> — approach, read the "defender", pick the counter</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= SHOOTING ================= -->
+  <section id="tab-shoot" role="tabpanel" hidden>
+    <div class="focus"><span class="fw" id="sFw"></span><span id="sFocus"></span></div>
+
+    <div class="card" id="shootSteps"></div>
+
+    <div class="card">
+      <div class="eyebrow">Form principles — SeeMikeDunn</div>
+      <ul class="plainlist">
+        <li><b>Balance first</b> — posture before anything else</li>
+        <li><b>Ball close to body</b> — no drifting away on the lift</li>
+        <li><b>Hands underneath</b> before the release</li>
+        <li><b>Remove unnecessary motion</b> — optimize, don't rebuild</li>
+      </ul>
+      <div class="eyebrow">Session structure — Hanlen</div>
+      <p class="note">Warm-up + form (~5 min) → skill of the day → game shots to finish.</p>
+    </div>
+
+    <!-- Free throws -->
+    <div class="card">
+      <div class="eyebrow">Free throws — pressure set</div>
+      <p class="note">Same routine every rep. Shoot these fatigued. <b style="color:var(--ink)">Make 8 of 10 or restart.</b></p>
+      <div class="fttally" id="ftTally"></div>
+      <div class="btnrow">
+        <button class="btn miss" id="ftMiss">Miss</button>
+        <button class="btn make" id="ftMake">Make</button>
+      </div>
+      <div class="ftmsg" id="ftMsg" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ================= DEFENSE ================= -->
+  <section id="tab-defend" role="tabpanel" hidden>
+    <div class="focus"><span class="fw" id="dFw"></span><span id="dFocus"></span></div>
+
+    <div class="card">
+      <div class="eyebrow">Stance fundamentals</div>
+      <ul class="plainlist">
+        <li>Wide base, <b>low hips</b> — sit into it</li>
+        <li>Weight on the <b>balls of the feet</b></li>
+        <li><b>Move feet, not hands</b></li>
+        <li>Stay <b>square</b> to the ball</li>
+      </ul>
+    </div>
+
+    <div class="card" id="defSolo"></div>
+
+    <div class="card">
+      <div class="eyebrow">Partner drills — live, with a constraint</div>
+      <ul class="plainlist">
+        <li><b>Mirror / wave</b> — react, don't guess</li>
+        <li><b>1v1 with a rule</b> — no middle · baseline only · no hands · start a step behind</li>
+        <li><b>Closeout &amp; contain</b> — sprint, chop, sit down on the drive</li>
+        <li><b>Shell + help-and-recover</b> — position before the pass</li>
+      </ul>
+      <div class="callout"><b>Deliberate-practice rule:</b> one focus per rep. Grade the focus, not the outcome. Say the diagnosis out loud.</div>
+      <div class="eyebrow">Sample weekly touch</div>
+      <ul class="plainlist" id="defWeekTouch"></ul>
+    </div>
+
+    <!-- Defensive log -->
+    <div class="card">
+      <div class="eyebrow">Defensive log</div>
+      <p class="note">Patterns compound — write what you diagnosed today.</p>
+      <textarea id="logInput" rows="2" placeholder="e.g. Beat middle twice — first step too upright on the closeout…" style="margin-top:12px"></textarea>
+      <button class="btn ghost" id="logSave">Save entry</button>
+      <div id="logList" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ================= SPEED & AGILITY ================= -->
+  <section id="tab-speed" role="tabpanel" hidden>
+    <div class="focus"><span class="fw" id="spFw"></span><span id="spFocus"></span></div>
+
+    <div class="card">
+      <div class="eyebrow">18-minute court block</div>
+      <p class="note">Runs hands-free through the timer: 4 min wall drives + falling starts → 6 min 3-pt starts + first-step → 6 min zig-zag + 5-10-5 + lateral bounds → 2 min reset + light pogos.</p>
+      <button class="btn" id="btnCourtBlock">▸ Run 18-min block</button>
+    </div>
+
+    <div class="card" id="speedGroups"></div>
+
+    <div class="card">
+      <div class="callout" style="margin-top:0"><b>Train the brakes first.</b> Deceleration is the most under-trained quality and the #1 non-contact injury site.</div>
+      <p class="note" style="margin-top:12px">Run this fresh (upper-body days) or as a court warm-up — never after leg day.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ================= TIMER OVERLAY ================= -->
+<div class="overlay" id="timerOverlay" hidden role="dialog" aria-label="Interval timer">
+  <button class="t-close" id="tClose">✕ close</button>
+  <div class="t-seg" id="tSeg"></div>
+  <div class="t-time" id="tTime">0:00</div>
+  <div class="t-next" id="tNext"></div>
+  <div class="t-prog" id="tProg"></div>
+  <div class="t-controls">
+    <button class="btn ghost" id="tBack">← Back</button>
+    <button class="btn ghost" id="tPause">Pause</button>
+    <button class="btn ghost" id="tSkip">Skip →</button>
+  </div>
+  <label class="t-auto">
+    <span class="chk" id="tAutoChk" role="checkbox" aria-checked="true" tabindex="0">✓</span>
+    Auto-advance to next drill
+  </label>
 </div>
 
-<script>
-// ─────────────────────────────────────────────────────────────────────────────
-// PLANET FITNESS — MONTH 3 DATA (4 weeks)
-// ─────────────────────────────────────────────────────────────────────────────
-const pfProgram = {
-1:{
-  note:"Week 1 — Foundation (June 1–6). New gym, new split. Learn the PF equipment layout. Compounds: 3–4 RIR. Isolations: 1–2 RIR.",
-  days:[
-    {name:"Monday",type:"upper",label:"Upper Body",subtitle:"Chest + Back + Arms",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[
-        {name:"Cable Face Pull (warm-up)",sets:"2 x 15",weight:"light",note:"Prime rear delts and rotator cuff before pressing."},
-        {name:"Cat-Cow + Thoracic Rotation",sets:"1 round x 10 ea",weight:"bw",note:"Loosen thoracic spine for rows and overhead work."}
-      ]},
-      {title:"Main Lifts",exercises:[
-        {name:"Incline Barbell Press",sets:"4 x 8",weight:"heavy",note:"Squat rack + incline bench. ~155–170 lbs. 3–4 RIR. Control descent, full lockout. Upper chest primary."},
-        {name:"Barbell Bent-Over Row",sets:"4 x 8",weight:"heavy",note:"Overhand grip. Touch lower sternum at top. Full hang/stretch at bottom every rep. 3–4 RIR. Back thickness driver."}
-      ]},
-      {title:"Vertical Pull",exercises:[
-        {name:"Lat Pulldown",sets:"3 x 10",weight:"medium",note:"Wide overhand. Scapula depresses first, then pull. Pull bar to upper chest. Full stretch at top. 1–2 RIR."}
-      ]},
-      {title:"Tri-set A — Arms + Lateral Delt (3 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead Cable Tricep Extension",sets:"3 x 12",weight:"light",note:"Long head. Elbow past ear at stretch. Full extension. 1–2 RIR.",tags:["superset"]},
-        {name:"Incline DB Curl",sets:"3 x 12",weight:"light",note:"Arm fully behind torso. Max bicep stretch at bottom. Squeeze at top. 1–2 RIR.",tags:["superset"]},
-        {name:"DB Lateral Raise",sets:"3 x 15",weight:"light",note:"Slight forward lean. Control the negative.",tags:["superset"]}
-      ]},
-      {title:"Back Finisher",exercises:[
-        {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"High pulley, split rope. Pull to ears, elbows high. Rear delt + scapular health — non-negotiable."}
-      ]}
-    ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat + Posterior Chain",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[
-        {name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},
-        {name:"Bodyweight Squat",sets:"2 x 10",weight:"bw",note:"Full depth. Prep knees and hips."}
-      ]},
-      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Band around rack post at knee height. Sit back ~60–70° knee flexion, shins vertical. Effort: ~70% (7/10). Pain 0–3/10 is OK during hold; above 5/10 reduce depth slightly. 2 min rest between holds. Backed by Rio et al. — acute pain relief lasts 40+ min. ~7.5 min total."},
-        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"Band at knee height looped behind knee. Step back for tension. Push knee fully straight against band and hold 6 sec each rep. VMO (inner quad) fires — corrects patellar tracking. 60 sec rest between sets."}
-      ]},
-      {title:"Power Movement",exercises:[
-        {name:"Trap Bar Deadlift — Explosive",sets:"3 x 4",weight:"heavy",note:"~225–245 lbs. Explosive concentric, full hip extension. PF replacement for power cleans.\n→ No trap bar: Barbell Speed Squat @60% 1RM, max bar speed (3×5)\n→ Jump day at school: 3×3 squat @70%, rest 4–6 min → court. Skip trap bar.",tags:["pap"]}
-      ]},
-      {title:"Primary Squat",exercises:[
-        {name:"Barbell Back Squat",sets:"4 x 5",weight:"heavy",note:"~215–235 lbs. 3–4 RIR. Below parallel. 3-sec eccentric."}
-      ]},
-      {title:"Posterior Chain",exercises:[
-        {name:"Romanian Deadlift",sets:"3 x 8",weight:"medium",note:"Heavy DBs or barbell. Max hamstring stretch at bottom. Brace hard."}
-      ]},
-      {title:"Calves",exercises:[
-        {name:"Seated Calf Raise",sets:"3 x 15",weight:"medium",note:"Full ROM. Pause at bottom. Soleus emphasis."},
-        {name:"Standing Calf Raise",sets:"3 x 12",weight:"medium",note:"Smith or machine. Gastrocnemius."}
-      ]},
-      {title:"Core — do anytime",isCoreBlock:true,exercises:[
-        {name:"Plank",sets:"3 x 40 sec"},{name:"Dead Bug",sets:"2 x 10 each"},{name:"Ab Machine Crunch",sets:"2 x 15"}
-      ]}
-    ]},
-    {name:"Wednesday",type:"push",label:"Push",subtitle:"Chest Volume + Shoulders + Triceps",time:"50-55 min",sections:[
-      {title:"Warm-up",exercises:[
-        {name:"Arm Circles + Shoulder CARs",sets:"1 round x 10 ea",weight:"bw",note:"Joint prep before pressing and OHP."}
-      ]},
-      {title:"Chest — Primary",exercises:[
-        {name:"Incline DB Press",sets:"4 x 10",weight:"medium",note:"~65–75 lbs DBs. Angle change from Mon barbell. 1–2 RIR. Full stretch at bottom — mandatory."}
-      ]},
-      {title:"Shoulders — Primary",exercises:[
-        {name:"Seated DB Overhead Press",sets:"4 x 10",weight:"medium",note:"~50–65 lbs. 3–4 RIR. Core braced. Full lockout overhead."}
-      ]},
-      {title:"Lateral Delt",exercises:[
-        {name:"DB Lateral Raise",sets:"3 x 15",weight:"light",note:"Slight forward lean. Near failure on last set."}
-      ]},
-      {title:"Tri-set B — Triceps + Upper Chest Isolation (3 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead DB Tricep Extension",sets:"3 x 12",weight:"light",note:"Long head. Full stretch — elbow past ear. 1–2 RIR.",tags:["superset"]},
-        {name:"Low-to-High Cable Flye",sets:"3 x 12",weight:"light",note:"Start at hip, finish at chin. Upper chest isolation. Last set near failure.",tags:["superset"]},
-        {name:"Tricep Rope Pushdown",sets:"3 x 15",weight:"light",note:"Flare rope at bottom. Elbows at sides. Last set to failure.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Thursday",type:"pull",label:"Pull",subtitle:"Full Back Coverage + Biceps",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[
-        {name:"Dead Hang",sets:"2 x 30 sec",weight:"bw",note:"Graviton or pull-up bar. Decompress spine. Lat stretch."}
-      ]},
-      {title:"Vertical Pull",exercises:[
-        {name:"Pull-Up",sets:"4 x max (6–10)",weight:"heavy",note:"Bodyweight or graviton assisted. Overhand medium-wide. Scapular depression before pulling. Full hang at bottom. 3–4 RIR."}
-      ]},
-      {title:"Horizontal Pull — Back Thickness",exercises:[
-        {name:"Seated Cable Row (wide grip)",sets:"4 x 10",weight:"heavy",note:"Wide bar. Pull to lower chest. Shoulder blades fully squeeze. Full stretch forward. 3–4 RIR."},
-        {name:"Single-Arm DB Row",sets:"3 x 10 ea",weight:"heavy",note:"Let arm hang fully at bottom — that stretch is the soreness driver. Brace on bench. 2–3 RIR."}
-      ]},
-      {title:"Lat Isolation",exercises:[
-        {name:"Cable Straight-Arm Pulldown",sets:"3 x 12",weight:"light",note:"Arms straight. Start above head, pull to hips. Max lat stretch at top. Last set near failure."}
-      ]},
-      {title:"Tri-set C — Biceps + Rear Delt (3 rounds)",isSuperset:true,exercises:[
-        {name:"Incline DB Curl",sets:"3 x 12",weight:"light",note:"Max bicep stretch at bottom. Squeeze at top. 1–2 RIR.",tags:["superset"]},
-        {name:"Hammer Curl",sets:"3 x 12",weight:"light",note:"Brachialis + arm thickness. Neutral grip. Control eccentric.",tags:["superset"]},
-        {name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt + scapular protocol. Every Pull session.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy + Plyometrics",time:"60-65 min",sections:[
-      {title:"Warm-up",exercises:[
-        {name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},
-        {name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",note:"Low amplitude, not max — CNS activation only.",tags:["outside"]}
-      ]},
-      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Same as Tuesday. 70% effort, ~60–70° knee flex. 2 min rest. Analgesic effect covers the full leg session. ~7.5 min."},
-        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Band around ankles. Stand on one leg. Drive stance hip outward against band. Keep pelvis level — no side lean. Hip stability + knee valgus control for court play. 30 sec rest between legs."},
-        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Stand on one foot. Press ball of foot firmly into floor. Strong steady hold — no shaking. Ankle stability. Reduces lower body stiffness during lateral cuts. 20 sec rest."}
-      ]},
-      {title:"Single-Leg Strength — Primary",exercises:[
-        {name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"medium",note:"~35–50 lbs each hand. Rear foot on bench. Full depth. Best single-leg jump carryover. 3–4 RIR."}
-      ]},
-      {title:"Quad Volume",exercises:[
-        {name:"Leg Press",sets:"4 x 12",weight:"medium",note:"Standard foot placement. Full ROM. 2–3 RIR."}
-      ]},
-      {title:"Posterior Chain",exercises:[
-        {name:"Lying or Seated Leg Curl",sets:"4 x 10",weight:"medium",note:"Full stretch. 2-sec eccentric. Last set near failure."},
-        {name:"Walking DB Lunge",sets:"3 x 12 ea",weight:"medium",note:"Long stride. Quad + glute."}
-      ]},
-      {title:"Calves",exercises:[
-        {name:"Standing Calf Raise",sets:"4 x 12",weight:"medium",note:"Pause at top. Gastrocnemius."}
-      ]},
-      {title:"Plyometrics — PRIORITY (any open space)",exercises:[
-        {name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"School, park, parking lot, any flat surface with a step or curb. React instantly off the floor — minimize ground contact. 60–90 sec rest between reps. This is a core vertical driver — do not skip.",tags:["outside"]}
-      ]}
-    ]},
-    {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[
-      {title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}
-    ]},
-    {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[
-      {title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"CNS recovery. Add 5–10 lbs to all compounds next week."}]}
-    ]}
-  ]
-},
-2:{
-  note:"Week 2 — Build (June 8–13). Add 5–10 lbs to every compound. Tri-sets go to 4 rounds. Lat pulldown and DB row each get a set added. Compounds: 2–3 RIR. Isolations: 1–2 RIR.",
-  days:[
-    {name:"Monday",type:"upper",label:"Upper Body",subtitle:"Chest + Back + Arms — volume up",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Cable Face Pull (warm-up)",sets:"2 x 15",weight:"light"}]},
-      {title:"Main Lifts",exercises:[
-        {name:"Incline Barbell Press",sets:"5 x 8",weight:"heavy",note:"5th set added. Add 5–10 lbs. 2–3 RIR."},
-        {name:"Barbell Bent-Over Row",sets:"5 x 8",weight:"heavy",note:"5th set added. Add 5 lbs. Full hang at bottom."}
-      ]},
-      {title:"Vertical Pull",exercises:[
-        {name:"Lat Pulldown",sets:"4 x 10",weight:"medium",note:"4 sets now. Add weight."}
-      ]},
-      {title:"Tri-set A — Arms + Lateral Delt (4 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead Cable Tricep Extension",sets:"4 x 12",weight:"medium",note:"4 rounds. Add weight. 1–2 RIR.",tags:["superset"]},
-        {name:"Incline DB Curl",sets:"4 x 12",weight:"medium",note:"4 rounds. Add weight. Keep full stretch.",tags:["superset"]},
-        {name:"DB Lateral Raise",sets:"4 x 15",weight:"light",note:"4 rounds. Control the negative.",tags:["superset"]}
-      ]},
-      {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt + scapular protocol."}]}
-    ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — add load",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},{name:"Bodyweight Squat",sets:"2 x 10",weight:"bw"}]},
-      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Same protocol. 70% effort, ~60–70° knee flex. 2 min rest. Continue building analgesic adaptation."},
-        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"Band behind knee. Full extension hold 6 sec each rep. VMO activation. 60 sec rest."}
-      ]},
-      {title:"Power Movement",exercises:[
-        {name:"Trap Bar Deadlift — Explosive",sets:"4 x 4",weight:"heavy",note:"4th set added. Add 10–20 lbs. Bar speed priority.\n→ No trap bar: Speed Squat 4×5.\n→ Jump day: PAP primer → court.",tags:["pap"]}
-      ]},
-      {title:"Primary Squat",exercises:[{name:"Barbell Back Squat",sets:"5 x 5",weight:"heavy",note:"5th set added. Add 5–10 lbs. ~225–245 lbs. 2–3 RIR."}]},
-      {title:"Posterior Chain",exercises:[{name:"Romanian Deadlift",sets:"4 x 8",weight:"medium",note:"4th set. Add 10 lbs. Full hamstring stretch."}]},
-      {title:"Calves",exercises:[
-        {name:"Seated Calf Raise",sets:"3 x 15",weight:"medium",note:"Add weight."},
-        {name:"Standing Calf Raise",sets:"3 x 12",weight:"medium",note:"Add weight."}
-      ]},
-      {title:"Core — do anytime",isCoreBlock:true,exercises:[
-        {name:"Plank",sets:"3 x 45 sec"},{name:"Dead Bug",sets:"3 x 10 each"},{name:"Ab Machine Crunch",sets:"3 x 15"}
-      ]}
-    ]},
-    {name:"Wednesday",type:"push",label:"Push",subtitle:"Chest + Shoulders + Triceps — add volume",time:"50-55 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Arm Circles + Shoulder CARs",sets:"1 round x 10 ea",weight:"bw"}]},
-      {title:"Chest — Primary",exercises:[{name:"Incline DB Press",sets:"4 x 10",weight:"medium",note:"Add 5 lbs DBs. 1–2 RIR."}]},
-      {title:"Shoulders — Primary",exercises:[{name:"Seated DB Overhead Press",sets:"4 x 10",weight:"medium",note:"Add 5 lbs. 2–3 RIR."}]},
-      {title:"Lateral Delt",exercises:[{name:"DB Lateral Raise",sets:"4 x 15",weight:"light",note:"4th set added. Near failure on last."}]},
-      {title:"Tri-set B — Triceps + Upper Chest Isolation (4 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead DB Tricep Extension",sets:"4 x 12",weight:"medium",note:"4 rounds. Add weight. 1–2 RIR.",tags:["superset"]},
-        {name:"Low-to-High Cable Flye",sets:"4 x 12",weight:"light",note:"4 rounds. Last set near failure.",tags:["superset"]},
-        {name:"Tricep Rope Pushdown",sets:"4 x 15",weight:"light",note:"4 rounds. Last set to failure.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Thursday",type:"pull",label:"Pull",subtitle:"Full Back + Biceps — add load",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Dead Hang",sets:"2 x 30 sec",weight:"bw"}]},
-      {title:"Vertical Pull",exercises:[{name:"Pull-Up",sets:"4 x max (8–12)",weight:"heavy",note:"Add reps or weight via belt. 2–3 RIR."}]},
-      {title:"Horizontal Pull — Back Thickness",exercises:[
-        {name:"Seated Cable Row (wide grip)",sets:"4 x 10",weight:"heavy",note:"Add weight. 2–3 RIR."},
-        {name:"Single-Arm DB Row",sets:"4 x 10 ea",weight:"heavy",note:"4th set added. Heavier. Full hang — the stretch creates soreness."}
-      ]},
-      {title:"Lat Isolation",exercises:[{name:"Cable Straight-Arm Pulldown",sets:"3 x 12",weight:"medium",note:"Add weight. Last set near failure."}]},
-      {title:"Tri-set C — Biceps + Rear Delt (4 rounds)",isSuperset:true,exercises:[
-        {name:"Incline DB Curl",sets:"4 x 12",weight:"medium",note:"4 rounds. Add weight.",tags:["superset"]},
-        {name:"Hammer Curl",sets:"4 x 12",weight:"medium",note:"4 rounds. Add weight.",tags:["superset"]},
-        {name:"Cable Face Pull",sets:"4 x 15",weight:"light",note:"4 rounds. Rear delt protocol.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Hypertrophy — build load",time:"60-65 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},{name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",tags:["outside"]}]},
-      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"Week 2 — same protocol, same effort. Continue building tendon tolerance."},
-        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Band around ankles. Drive stance hip outward. Pelvis level. 30 sec rest between legs."},
-        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Press ball of foot into floor. Steady hold. Ankle stability."}
-      ]},
-      {title:"Single-Leg Strength — Primary",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"medium",note:"Add 5–10 lbs. 2–3 RIR."}]},
-      {title:"Quad Volume",exercises:[{name:"Leg Press",sets:"4 x 12",weight:"medium",note:"Add weight. 2–3 RIR."}]},
-      {title:"Posterior Chain",exercises:[
-        {name:"Lying or Seated Leg Curl",sets:"4 x 10",weight:"medium",note:"Add weight. Near failure last set."},
-        {name:"Walking DB Lunge",sets:"3 x 14 ea",weight:"medium",note:"2 more reps per leg."}
-      ]},
-      {title:"Calves",exercises:[{name:"Standing Calf Raise",sets:"4 x 12",weight:"medium",note:"Add weight."}]},
-      {title:"Plyometrics — PRIORITY (any open space)",exercises:[{name:"Depth Jumps — 12\" box",sets:"3 x 5",weight:"bw",note:"Faster reactivity goal — shorten ground contact vs W1. Do these anywhere. Core vertical driver.",tags:["outside"]}]}
-    ]},
-    {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[{title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}]},
-    {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Peak week starts Monday. Sleep and eat well this weekend."}]}]}
-  ]
-},
-3:{
-  note:"Week 3 — PEAK (June 15–20). Target a rep PR or weight PR on at least one compound per session. Compounds: 0–1 RIR. Isolations: technical failure on the final set.",
-  days:[
-    {name:"Monday",type:"upper",label:"Upper Body",subtitle:"Chest + Back + Arms — PEAK",time:"60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Cable Face Pull (warm-up)",sets:"2 x 15",weight:"light",note:"Prime before heavy pressing."}]},
-      {title:"Main Lifts",exercises:[
-        {name:"Incline Barbell Press",sets:"5 x 6",weight:"heavy",note:"PEAK. Go for weight or rep PR. 0–1 RIR."},
-        {name:"Barbell Bent-Over Row",sets:"5 x 6",weight:"heavy",note:"PEAK. Match press intensity. 0–1 RIR. Touch sternum, full hang at bottom."}
-      ]},
-      {title:"Vertical Pull",exercises:[{name:"Lat Pulldown",sets:"4 x 8",weight:"heavy",note:"Heavier, fewer reps. 0–1 RIR. Max lat activation."}]},
-      {title:"Tri-set A — Arms + Lateral Delt (4 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead Cable Tricep Extension",sets:"4 x 12",weight:"medium",note:"Last set to technical failure.",tags:["superset"]},
-        {name:"Incline DB Curl",sets:"4 x 12",weight:"medium",note:"Last set to technical failure. Full stretch.",tags:["superset"]},
-        {name:"DB Lateral Raise",sets:"4 x 15",weight:"light",note:"Last set to failure.",tags:["superset"]}
-      ]},
-      {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"3 x 15",weight:"light",note:"Rear delt protocol. Last set near failure."}]}
-    ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — PEAK",time:"55-60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},{name:"Vertical Jump Activation",sets:"3 x 3",weight:"bw",note:"Easy jumps — prime CNS.",tags:["outside"]}]},
-      {title:"Isometric Warm-Up — Knee Health",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"PEAK week — same protocol. Knee pain relief is most important today with heavy loads coming. 70% effort, 2 min rest."},
-        {name:"Terminal Knee Extension (TKE) Isometric",sets:"3 × 10 reps × 6-sec hold",weight:"light",note:"VMO activation. Band behind knee. 6 sec hold each rep. 60 sec rest."}
-      ]},
-      {title:"Power Movement",exercises:[{name:"Trap Bar Deadlift — Explosive",sets:"4 x 4",weight:"heavy",note:"PEAK. Push for weight PR. 0–1 RIR. Max bar speed every rep.",tags:["pap"]}]},
-      {title:"Primary Squat",exercises:[{name:"Barbell Back Squat",sets:"5 x 4",weight:"heavy",note:"PEAK. Weight PR target. ~245–265 lbs. 0–1 RIR."}]},
-      {title:"Posterior Chain",exercises:[{name:"Romanian Deadlift",sets:"4 x 8",weight:"heavy",note:"Heaviest RDL of month. Last set near failure."}]},
-      {title:"Calves",exercises:[
-        {name:"Seated Calf Raise",sets:"4 x 12",weight:"heavy",note:"Push for load PR."},
-        {name:"Standing Calf Raise",sets:"4 x 10",weight:"heavy",note:"Near failure on last set."}
-      ]},
-      {title:"Core — do anytime",isCoreBlock:true,exercises:[{name:"Plank",sets:"3 x 60 sec"},{name:"Dead Bug",sets:"3 x 10 each"},{name:"Ab Machine Crunch",sets:"3 x 15"}]}
-    ]},
-    {name:"Wednesday",type:"push",label:"Push",subtitle:"Chest + Shoulders + Triceps — PEAK",time:"55 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Arm Circles + Shoulder CARs",sets:"1 round x 10 ea",weight:"bw"}]},
-      {title:"Chest — Primary",exercises:[{name:"Incline DB Press",sets:"5 x 8",weight:"heavy",note:"PEAK — 5th set. Push for DB load PR. 0–1 RIR."}]},
-      {title:"Shoulders — Primary",exercises:[{name:"Seated DB Overhead Press",sets:"4 x 8",weight:"heavy",note:"PEAK. OHP PR target this month. 0–1 RIR."}]},
-      {title:"Lateral Delt",exercises:[{name:"DB Lateral Raise",sets:"4 x 15",weight:"light",note:"Last set to failure."}]},
-      {title:"Tri-set B — Triceps + Upper Chest Isolation (4 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead DB Tricep Extension",sets:"4 x 12",weight:"medium",note:"Last set to technical failure.",tags:["superset"]},
-        {name:"Low-to-High Cable Flye",sets:"4 x 12",weight:"medium",note:"Last set to failure. Upper chest.",tags:["superset"]},
-        {name:"Tricep Rope Pushdown",sets:"4 x 15",weight:"light",note:"Last set to failure.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Thursday",type:"pull",label:"Pull",subtitle:"Full Back + Biceps — PEAK",time:"60 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Dead Hang",sets:"2 x 30 sec",weight:"bw"}]},
-      {title:"Vertical Pull",exercises:[{name:"Pull-Up",sets:"5 x max",weight:"heavy",note:"PEAK — 5 sets. Max reps or add weight via belt. 0–1 RIR."}]},
-      {title:"Horizontal Pull — Back Thickness",exercises:[
-        {name:"Seated Cable Row (wide grip)",sets:"4 x 8",weight:"heavy",note:"PEAK. Heavier, fewer reps. 0–1 RIR."},
-        {name:"Single-Arm DB Row",sets:"4 x 10 ea",weight:"heavy",note:"PEAK. Heaviest DB of month. Full hang at bottom."}
-      ]},
-      {title:"Lat Isolation",exercises:[{name:"Cable Straight-Arm Pulldown",sets:"3 x 12",weight:"medium",note:"Last set to technical failure. Max lat stretch."}]},
-      {title:"Tri-set C — Biceps + Rear Delt (4 rounds)",isSuperset:true,exercises:[
-        {name:"Incline DB Curl",sets:"4 x 12",weight:"medium",note:"Last set to technical failure.",tags:["superset"]},
-        {name:"Hammer Curl",sets:"4 x 12",weight:"medium",note:"Last set to failure.",tags:["superset"]},
-        {name:"Cable Face Pull",sets:"4 x 15",weight:"light",note:"Rear delt protocol.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Volume + Power — PEAK",time:"62-68 min",sections:[
-      {title:"Warm-up",exercises:[{name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},{name:"Box Jump or Broad Jump — Activation",sets:"3 x 3",weight:"bw",tags:["outside"]}]},
-      {title:"Isometric Warm-Up — Knee + Stability",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"5 × 45-sec hold",weight:"iso",note:"PEAK — most important day to run this. Heavy BSS and Leg Press today. 70% effort. 2 min rest. Pain relief covers the session."},
-        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 30 sec per leg",weight:"light",note:"Hip stability. Pelvis level. 30 sec rest between legs."},
-        {name:"Isometric Single-Leg Calf Press",sets:"2 × 20 sec per leg",weight:"bw",note:"Ankle stability. Steady hold. 20 sec rest."}
-      ]},
-      {title:"Single-Leg Strength — Primary",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"4 x 10 ea",weight:"heavy",note:"PEAK. Heaviest of month. 0–1 RIR."}]},
-      {title:"Quad Volume",exercises:[{name:"Leg Press",sets:"5 x 10",weight:"heavy",note:"PEAK — 5th set. Heaviest load. 0–1 RIR."}]},
-      {title:"Posterior Chain",exercises:[
-        {name:"Lying or Seated Leg Curl",sets:"4 x 10",weight:"heavy",note:"Last set to technical failure."},
-        {name:"Walking DB Lunge",sets:"3 x 16 ea",weight:"medium",note:"Peak volume — 16 reps."}
-      ]},
-      {title:"Calves",exercises:[{name:"Standing Calf Raise",sets:"5 x 10",weight:"heavy",note:"PEAK — 5th set. Calf PR target."}]},
-      {title:"Plyometrics — PRIORITY (any open space)",exercises:[{name:"Depth Jumps — 18\" box",sets:"3 x 5",weight:"bw",note:"PEAK — progress to 18\" box this week. Max reactive force — minimize ground contact time. 90 sec rest between reps. Core vertical driver — do not skip.",tags:["outside"]}]}
-    ]},
-    {name:"Saturday",type:"rest",label:"Rest",subtitle:"Optional mobility",time:"—",sections:[{title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}]},
-    {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Notes",exercises:[{name:"Full rest",sets:"—",weight:"bw",note:"Peak week done. Deload starts Monday."}]}]}
-  ]
-},
-4:{
-  note:"Week 4 — Deload (June 22–27). Same exercises. Cut weights 40–50%. Cut sets ~50%. 4–5 RIR on everything. Goal: flush fatigue, restore recovery. Test vertical this week.",
-  days:[
-    {name:"Monday",type:"upper",label:"Upper Body",subtitle:"Chest + Back + Arms — DELOAD",time:"35-40 min",sections:[
-      {title:"Main Lifts — reduced",exercises:[
-        {name:"Incline Barbell Press",sets:"3 x 6",weight:"light",note:"~55% of W3. 4–5 RIR. Perfect form only."},
-        {name:"Barbell Bent-Over Row",sets:"3 x 6",weight:"light",note:"~55% of W3. Form focus only."}
-      ]},
-      {title:"Vertical Pull",exercises:[{name:"Lat Pulldown",sets:"2 x 10",weight:"light",note:"Light. Full ROM. Lat stretch only."}]},
-      {title:"Tri-set A (2 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead Cable Tricep Extension",sets:"2 x 12",weight:"light",note:"4–5 RIR. Never to failure.",tags:["superset"]},
-        {name:"Incline DB Curl",sets:"2 x 12",weight:"light",note:"4–5 RIR. Blood flow.",tags:["superset"]},
-        {name:"DB Lateral Raise",sets:"2 x 15",weight:"light",note:"Very light. Just pump.",tags:["superset"]}
-      ]},
-      {title:"Back Finisher",exercises:[{name:"Cable Face Pull",sets:"2 x 15",weight:"light",note:"Shoulder health maintenance."}]}
-    ]},
-    {name:"Tuesday",type:"lower",label:"Lower Body",subtitle:"Power + Squat — DELOAD + Jump Test",time:"45-50 min",sections:[
-      {title:"Isometric Warm-Up — Maintenance",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"3 × 45-sec hold",weight:"iso",note:"Deload — maintain protocol. 3 holds instead of 5. Same 70% effort, 2 min rest. Continue tendon health work even during deload."},
-        {name:"Terminal Knee Extension (TKE) Isometric",sets:"2 × 10 reps × 6-sec hold",weight:"light",note:"Maintenance. 2 sets instead of 3. VMO activation before light squat work."}
-      ]},
-      {title:"Power Movement",exercises:[{name:"Trap Bar Deadlift — Moderate",sets:"3 x 4",weight:"light",note:"~60% of W3. Bar speed still crisp. Flush legs."}]},
-      {title:"Primary Squat",exercises:[{name:"Barbell Back Squat",sets:"3 x 5",weight:"light",note:"~55% of W3. 4–5 RIR. Perfect form."}]},
-      {title:"Posterior Chain",exercises:[{name:"Romanian Deadlift",sets:"2 x 8",weight:"light",note:"Light. Full stretch, no soreness goal."}]},
-      {title:"Calves",exercises:[{name:"Seated Calf Raise",sets:"2 x 12",weight:"light"}]},
-      {title:"Vertical Jump Test",exercises:[
-        {name:"Jump Warm-Up",sets:"10 min",weight:"bw",note:"10–12 easy jumps before testing. Do not test cold.",tags:["outside"]},
-        {name:"Max Vertical Test — Wall Method",sets:"5–8 attempts",weight:"bw",note:"Compare to Month 2 baseline. 90 sec between max attempts. Record your best. This is your Month 4 starting benchmark.",tags:["outside"]}
-      ]}
-    ]},
-    {name:"Wednesday",type:"push",label:"Push",subtitle:"Chest + Shoulders + Triceps — DELOAD",time:"35 min",sections:[
-      {title:"Chest — Reduced",exercises:[{name:"Incline DB Press",sets:"3 x 8",weight:"light",note:"60% of W3. Recovery."}]},
-      {title:"Shoulders — Reduced",exercises:[{name:"Seated DB Overhead Press",sets:"2 x 10",weight:"light",note:"Very light. 4–5 RIR."}]},
-      {title:"Lateral Delt",exercises:[{name:"DB Lateral Raise",sets:"2 x 15",weight:"light",note:"Light pump. Never near failure."}]},
-      {title:"Tri-set B (2 rounds)",isSuperset:true,exercises:[
-        {name:"Overhead DB Tricep Extension",sets:"2 x 12",weight:"light",note:"4–5 RIR.",tags:["superset"]},
-        {name:"Low-to-High Cable Flye",sets:"2 x 12",weight:"light",note:"Light. Blood flow.",tags:["superset"]},
-        {name:"Tricep Rope Pushdown",sets:"2 x 15",weight:"light",note:"4–5 RIR.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Thursday",type:"pull",label:"Pull",subtitle:"Back + Biceps — DELOAD",time:"35 min",sections:[
-      {title:"Vertical Pull",exercises:[{name:"Pull-Up",sets:"3 x max (easy)",weight:"bw",note:"Bodyweight only. 4–5 RIR. Stop well before failure."}]},
-      {title:"Horizontal Pull — Reduced",exercises:[
-        {name:"Seated Cable Row",sets:"2 x 10",weight:"light",note:"Light. Full ROM. Back flush."},
-        {name:"Single-Arm DB Row",sets:"2 x 10 ea",weight:"light",note:"Light. Full stretch for recovery."}
-      ]},
-      {title:"Lat Isolation",exercises:[{name:"Cable Straight-Arm Pulldown",sets:"2 x 12",weight:"light",note:"4–5 RIR. Lat stretch maintenance."}]},
-      {title:"Tri-set C (2 rounds)",isSuperset:true,exercises:[
-        {name:"Incline DB Curl",sets:"2 x 12",weight:"light",note:"4–5 RIR.",tags:["superset"]},
-        {name:"Hammer Curl",sets:"2 x 10",weight:"light",tags:["superset"]},
-        {name:"Cable Face Pull",sets:"2 x 15",weight:"light",note:"Still non-negotiable.",tags:["superset"]}
-      ]}
-    ]},
-    {name:"Friday",type:"legs",label:"Legs",subtitle:"Legs — DELOAD",time:"45 min",sections:[
-      {title:"Isometric Warm-Up — Maintenance",isIsoBlock:true,exercises:[
-        {name:"Spanish Squat Isometric Hold",sets:"3 × 45-sec hold",weight:"iso",note:"Deload — 3 holds. Maintain knee health protocol. Don't skip — this is when tendon adaptation continues while mechanical load is reduced."},
-        {name:"Single-Leg Hip Abductor Hold",sets:"2 × 20 sec per leg",weight:"light",note:"Reduced. Keep hip stability work going through deload."}
-      ]},
-      {title:"Single-Leg — Reduced",exercises:[{name:"Bulgarian Split Squat (DB)",sets:"3 x 8 ea",weight:"light",note:"~60% of W3. Blood flow."}]},
-      {title:"Quad Volume — Reduced",exercises:[{name:"Leg Press",sets:"2 x 12",weight:"light",note:"Very light. Flush quads."}]},
-      {title:"Posterior Chain — Reduced",exercises:[{name:"Lying or Seated Leg Curl",sets:"2 x 10",weight:"light",note:"Light. Recovery."}]},
-      {title:"Calves",exercises:[{name:"Standing Calf Raise",sets:"3 x 12",weight:"light"}]},
-      {title:"Optional — Jump Test (if not done Tuesday)",exercises:[
-        {name:"Max Vertical Test — Wall Method",sets:"5–8 attempts",weight:"bw",note:"If you didn't test Tuesday, test today. Record your best. This is your Month 4 baseline.",tags:["outside"]}
-      ]}
-    ]},
-    {name:"Saturday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Optional",exercises:[{name:"Light Walk or Stretch",sets:"—",weight:"bw"}]}]},
-    {name:"Sunday",type:"rest",label:"Full Rest",subtitle:"No training",time:"—",sections:[{title:"Notes",exercises:[{name:"Month 3 complete",sets:"—",weight:"bw",note:"Record: vertical jump, top working weights (squat, bench, OHP, pull-ups), physique notes. These are your Month 4 baselines."}]}]}
-  ]
-}
-}; // end pfProgram
+</div><!-- /#app-skill -->
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BODYWEIGHT / VACATION DATA (6 days)
-// ─────────────────────────────────────────────────────────────────────────────
-const bwDays = [
-  // ── DAY 1 — PUSH ──────────────────────────────────────────────────────────
-  {name:"Day 1",type:"push",label:"Push",subtitle:"Chest + Shoulders + Triceps + Core",time:"45-50 min",sections:[
-    {title:"Warm-up",exercises:[
-      {name:"Arm Circles + Thoracic Rotation",sets:"1 round x 10 ea",weight:"bw",note:"Open chest and shoulders before pressing."},
-      {name:"Inchworm to Push-Up Position",sets:"5 reps",weight:"bw",note:"Shoulder blade stability warm-up."}
-    ]},
-    {title:"Chest",exercises:[
-      {name:"Decline Push-Up (feet on bed/chair)",sets:"4 x max",weight:"bw",note:"Feet elevated = upper chest emphasis. 3-sec eccentric. 90 sec rest."},
-      {name:"Archer Push-Up",sets:"3 x 8 ea side",weight:"bw",note:"Wide stance — lower to one side, opposite arm straight. Deep pec stretch."},
-      {name:"Wide Push-Up",sets:"3 x max",weight:"bw",note:"Full stretch at bottom. Lock out at top."}
-    ]},
-    {title:"Shoulders",exercises:[
-      {name:"Pike Push-Up",sets:"4 x 10–15",weight:"bw",note:"Hips high, head toward floor — simulates overhead press. Elbows track back."},
-      {name:"Hindu Push-Up",sets:"3 x 10",weight:"bw",note:"Dive-bomber fluid motion. Shoulder mobility + strength."}
-    ]},
-    {title:"Triceps",exercises:[
-      {name:"Diamond Push-Up",sets:"4 x max",weight:"bw",note:"Hands form a diamond. Elbows track back. Tricep dominant. Last set to failure."},
-      {name:"Chair Dip",sets:"3 x max",weight:"bw",note:"Hands on chair behind you, feet extended. Elbows back. Last set to failure."}
-    ]},
-    {title:"Core — Heavy (3 rounds)",isCoreBlock:true,exercises:[
-      {name:"Hollow Body Hold",sets:"3 x 30 sec",note:"Lower back pressed into floor. Arms extended. Anti-extension."},
-      {name:"Dead Bug",sets:"3 x 10 ea",note:"Opposite arm/leg. Slow. Lower back stays flat."},
-      {name:"Mountain Climber",sets:"3 x 30 sec",note:"Drive knees fast. Hips level."},
-      {name:"Plank",sets:"3 x 45 sec",note:"Squeeze glutes. Total body tension."}
-    ]}
-  ]},
-  // ── DAY 2 — LEGS + POWER ──────────────────────────────────────────────────
-  {name:"Day 2",type:"legs",label:"Legs + Power",subtitle:"Quads + Hams + Glutes + Calves + Jump Work",time:"50-55 min",sections:[
-    {title:"Warm-up",exercises:[
-      {name:"Hip Circle + Leg Swing",sets:"1 round x 10 ea",weight:"bw"},
-      {name:"World's Greatest Stretch",sets:"5 ea side",weight:"bw",note:"Lunge + thoracic rotation + hamstring."}
-    ]},
-    {title:"Power — Vertical Jump",exercises:[
-      {name:"Jump Squat",sets:"4 x 6",weight:"bw",note:"Max intent every rep. Land soft — absorb in full squat. 60–90 sec rest.",tags:["power"]},
-      {name:"Broad Jump",sets:"3 x 5",weight:"bw",note:"Horizontal power. Swing arms, drive hips. Stick the landing.",tags:["power"]}
-    ]},
-    {title:"Single-Leg Strength — Primary",exercises:[
-      {name:"Bulgarian Split Squat (foot on bed/chair)",sets:"4 x 12 ea",weight:"bw",note:"Full depth. 3-sec eccentric. Best single-leg jump carryover."},
-      {name:"Assisted Pistol Squat",sets:"3 x 5–8 ea",weight:"bw",note:"Hold doorframe for balance. As deep as possible. Build toward full pistol."}
-    ]},
-    {title:"Posterior Chain",exercises:[
-      {name:"Nordic Curl (feet under sofa)",sets:"3 x 4–6",weight:"bw",note:"Lower as slowly as possible (3–5 sec). Push floor to return. Elite hamstring eccentric + injury prevention."},
-      {name:"Single-Leg Hip Thrust (off bed/couch)",sets:"3 x 15 ea",weight:"bw",note:"Upper back on furniture edge. Drive hips up. Squeeze glute at top."}
-    ]},
-    {title:"Calves",exercises:[
-      {name:"Single-Leg Calf Raise (stair edge)",sets:"4 x 20 ea",weight:"bw",note:"Drop heel below stair for full stretch. Full ROM. If no stairs → bilateral on floor."}
-    ]},
-    {title:"Core — Stability (3 rounds)",isCoreBlock:true,exercises:[
-      {name:"Plank",sets:"3 x 45 sec"},
-      {name:"Leg Raise",sets:"3 x 12–15",note:"Controlled lowering. Lower back stays down."},
-      {name:"Russian Twist",sets:"3 x 20 total",note:"Feet lifted. Rotate fully side to side."},
-      {name:"Glute Bridge March",sets:"3 x 20 total",note:"Bridge position, alternate lifting each knee."}
-    ]}
-  ]},
-  // ── DAY 3 — PULL + CORE ───────────────────────────────────────────────────
-  {name:"Day 3",type:"pull",label:"Pull + Core",subtitle:"Back + Biceps + Heavy Core",time:"45-50 min",sections:[
-    {title:"Warm-up",exercises:[
-      {name:"Cat-Cow + Thread the Needle",sets:"1 round x 10 ea",weight:"bw",note:"Thoracic spine mobility."},
-      {name:"Dead Hang (if bar available)",sets:"2 x 30 sec",weight:"bw",note:"Decompress spine. Lat stretch.",tags:["bar"]}
-    ]},
-    {title:"Pulling — Primary",exercises:[
-      {name:"Inverted Row (under table)",sets:"4 x max",weight:"bw",note:"Lie under a sturdy table. Overhand grip on edge. Chest to table, lower controlled. Elevate feet to make harder.",tags:["bar"]},
-      {name:"→ If pull-up bar available: Pull-Up",sets:"4 x max",weight:"bw",note:"Replace inverted rows. Full hang at bottom. Wide overhand. Scapular depression first.",tags:["bar"]}
-    ]},
-    {title:"Posterior Back + Scapular",exercises:[
-      {name:"Superman Hold",sets:"4 x 8 (2-sec hold ea)",weight:"bw",note:"Lie face down. Lift arms and legs simultaneously. Hold 2 sec at top."},
-      {name:"YTW Raises — prone, bodyweight",sets:"3 x 10 ea position",weight:"bw",note:"Y=arms overhead, T=arms out, W=elbows 90°. All prone. Lower trap, rhomboids, rear delts."},
-      {name:"Reverse Snow Angel — prone",sets:"3 x 15",weight:"bw",note:"Arms by sides, sweep up to overhead and back. Keep them off the floor."}
-    ]},
-    {title:"Biceps",exercises:[
-      {name:"Isometric Bicep Curl — Doorframe",sets:"3 x 10 ea",weight:"bw",note:"Press back of wrist against frame and curl against it. Or push up under a table."},
-      {name:"→ If pull-up bar: Chin-Up",sets:"3 x max",weight:"bw",note:"Underhand grip. Full stretch at bottom.",tags:["bar"]}
-    ]},
-    {title:"Core — Heavy Day (4 rounds)",isCoreBlock:true,exercises:[
-      {name:"Dragon Flag Progression",sets:"4 x 5–8",note:"Hold something overhead. Lower legs slowly. Scale: tuck → single-leg → full. Hardest core bodyweight movement."},
-      {name:"Hollow Body Rock",sets:"4 x 20 rocks",note:"Rock forward and back. Maintain hollow shape throughout. No breaking."},
-      {name:"L-Sit Hold (floor or chairs)",sets:"4 x 15–30 sec",note:"Press into floor, lift hips and legs. Tuck knees to scale."},
-      {name:"Side Plank",sets:"3 x 30 sec ea",note:"Elbow or hand. Body straight. No hip sag."},
-      {name:"Bicycle Crunch",sets:"3 x 20 total",note:"Full rotation. Slow and deliberate."}
-    ]}
-  ]},
-  // ── DAY 4 — LEGS POSTERIOR ────────────────────────────────────────────────
-  {name:"Day 4",type:"legs",label:"Legs (Posterior)",subtitle:"Hamstrings + Glutes + Core Rotational",time:"45-50 min",sections:[
-    {title:"Warm-up",exercises:[
-      {name:"Hip Circle + Glute Activation",sets:"2 x 10 ea",weight:"bw"},
-      {name:"Bodyweight Good Morning",sets:"2 x 10",weight:"bw",note:"Hinge at hips, feel hamstring stretch. Spine neutral."}
-    ]},
-    {title:"Power — Horizontal",exercises:[
-      {name:"Broad Jump",sets:"3 x 5",weight:"bw",note:"Max distance. Full hip extension. Stick landing.",tags:["power"]},
-      {name:"Split Jump (Lunge Jump)",sets:"3 x 6 ea",weight:"bw",note:"Jump and switch legs in air. Land soft.",tags:["power"]}
-    ]},
-    {title:"Glutes — Primary",exercises:[
-      {name:"Hip Thrust off Bed/Couch",sets:"4 x 20",weight:"bw",note:"Upper back on furniture. Drive hips up, 1-sec pause at top. Load with suitcase if available."},
-      {name:"Single-Leg Hip Thrust",sets:"3 x 15 ea",weight:"bw",note:"Same setup, one leg extended. Much harder. Full ROM."}
-    ]},
-    {title:"Hamstrings",exercises:[
-      {name:"Single-Leg RDL (bodyweight)",sets:"3 x 12 ea",weight:"bw",note:"Hinge at hip, free leg extends back. Full hamstring stretch. Slow and controlled."},
-      {name:"Nordic Curl (feet under sofa)",sets:"3 x 4–6",weight:"bw",note:"Lower as slow as possible. Push floor with hands to return."}
-    ]},
-    {title:"Lower Body Volume",exercises:[
-      {name:"Reverse Lunge",sets:"3 x 12 ea",weight:"bw",note:"Step back, rear knee near floor. Quad + glute. Upright torso."},
-      {name:"Wall Sit",sets:"3 x 45–60 sec",weight:"bw",note:"Thighs parallel to floor. Quad isometric endurance."}
-    ]},
-    {title:"Calves",exercises:[{name:"Single-Leg Calf Raise (stair edge)",sets:"3 x 20 ea",weight:"bw",note:"Full ROM. Pause at top."}]},
-    {title:"Core — Rotational (3 rounds)",isCoreBlock:true,exercises:[
-      {name:"Pallof Press — Towel on Door Handle",sets:"3 x 12 ea side",note:"Loop towel around door handle at chest height. Stand sideways, hold towel, press straight out and back. Anti-rotation."},
-      {name:"McGill Bird-Dog",sets:"3 x 10 ea",note:"Opposite arm and leg. Pause 1 sec at extension. Spine stability."},
-      {name:"Side Plank Hip Dip",sets:"3 x 12 ea",note:"Side plank — lower hip to floor and raise. Oblique emphasis."},
-      {name:"Plank Reach",sets:"3 x 10 ea arm",note:"Plank — reach one arm forward, hold 2 sec. Anti-rotation + shoulder stability."}
-    ]}
-  ]},
-  // ── DAY 5 — FULL BODY POWER ───────────────────────────────────────────────
-  {name:"Day 5",type:"power",label:"Full Body Power",subtitle:"Max Power + Conditioning Circuit + Core Finisher",time:"45-50 min",sections:[
-    {title:"Warm-up",exercises:[
-      {name:"Dynamic Warm-Up",sets:"5 min",weight:"bw",note:"Jumping jacks, high knees, leg swings, arm circles, hip circles."},
-      {name:"Easy Jump Practice",sets:"5 jumps",weight:"bw",note:"Not max effort — just activation. Prime CNS."}
-    ]},
-    {title:"Max Power — Primary",exercises:[
-      {name:"Vertical Jump — Max Height",sets:"4 x 3",weight:"bw",note:"Full approach or standing. Max intent every rep. 90 sec between sets.",tags:["power"]},
-      {name:"Sprint × 20 yards (if outdoors) or Sub: Vertical Jumps",sets:"5 reps",weight:"bw",note:"Option A: 20-yd all-out sprint, walk back, repeat. Option B (indoor): 5 max vertical jumps.",tags:["power"]}
-    ]},
-    {title:"Upper Body Power",exercises:[
-      {name:"Plyometric Push-Up",sets:"4 x 6",weight:"bw",note:"Push hard enough to leave the ground. Clap if possible. Land with soft elbows.",tags:["power"]},
-      {name:"Pike Push-Up — Fast Concentric",sets:"3 x 10",weight:"bw",note:"Lower controlled, press as fast as possible."}
-    ]},
-    {title:"Conditioning Circuit — 3 rounds (30 sec on, 10 sec off)",isCircuit:true,exercises:[
-      {name:"Burpee",sets:"30 sec",weight:"bw",note:"Chest to floor, explosive jump at top.",tags:["power"]},
-      {name:"Jump Squat",sets:"30 sec",weight:"bw",note:"Max height every rep.",tags:["power"]},
-      {name:"Wide Push-Up",sets:"30 sec",weight:"bw",note:"Chest to floor, full lockout."},
-      {name:"Mountain Climber",sets:"30 sec",weight:"bw",note:"Drive knees fast. Hips level."},
-      {name:"Split Jump",sets:"30 sec",weight:"bw",note:"Lunge jumps. Land soft, switch fast.",tags:["power"]},
-      {name:"V-Up",sets:"30 sec",weight:"bw",note:"Arms and legs rise to meet in middle."}
-    ],circuitNote:"Rest 90 sec between full rounds. 3 rounds ≈ 15 min total."},
-    {title:"Core Finisher (3 rounds)",isCoreBlock:true,exercises:[
-      {name:"Ab Rollout — Towel on Smooth Floor",sets:"3 x 8–10",note:"Kneel on towel on smooth floor. Roll forward until nearly flat, pull back in. Equivalent to ab wheel."},
-      {name:"Dragon Flag / Hollow Body",sets:"3 x 5–8",note:"Full core tension. Lower legs slowly. Scale as needed."},
-      {name:"Leg Raise",sets:"3 x 12",note:"Full hang if bar available, or floor. Controlled lowering."},
-      {name:"Bicycle Crunch",sets:"3 x 20",note:"Full rotation. Deliberate, not rushing."}
-    ]}
-  ]},
-  // ── DAY 6 — CORE DESTROYER ───────────────────────────────────────────────
-  {name:"Day 6",type:"core-x",label:"Core Destroyer",subtitle:"Standalone Intense Core Circuit — Add any day or run alone",time:"35-40 min",sections:[
-    {blockHeader:"Block 1 — Anti-Extension",blockRest:"90 sec between rounds · 4 rounds",exercises:[
-      {name:"Dragon Flag Progression",sets:"4 x 5–8",weight:"bw",note:"The king of core exercises. Hold something stable overhead. Lower legs slowly keeping body rigid. Scale: tuck knees → single leg → full. Never sacrifice form for reps."},
-      {name:"Hollow Body Hold",sets:"4 x 40 sec",weight:"bw",note:"Arms extended overhead, legs low. Lower back glued to floor. If it breaks — tuck knees and continue. No rest between hollow and rollout."},
-      {name:"Ab Rollout — Towel on Floor or Ab Wheel",sets:"4 x 8–10",weight:"bw",note:"Kneel, roll forward until hips are almost in line with body, pull back in with abs — not arms. Hardest rollout position = full extension."},
-      {name:"Dead Bug",sets:"4 x 10 ea",weight:"bw",note:"Opposite arm and leg extend to floor simultaneously. Lower back stays pressed down the entire time. Slow — 3 sec out, 3 sec back."}
-    ]},
-    {blockHeader:"Block 2 — Rotation + Lateral Stability",blockRest:"90 sec between rounds · 3 rounds",exercises:[
-      {name:"Bicycle Crunch — Slow",sets:"3 x 20 total",weight:"bw",note:"Each rotation takes 2 seconds. Full elbow-to-knee contact. No neck pulling. Quality over speed."},
-      {name:"Side Plank — Left",sets:"3 x 45 sec",weight:"bw",note:"Elbow directly under shoulder. Hip off the floor. Body perfectly straight. No sagging."},
-      {name:"Side Plank Hip Dip — Left",sets:"3 x 12",weight:"bw",note:"From side plank — lower hip to floor and drive it back up. Oblique emphasis."},
-      {name:"Side Plank — Right",sets:"3 x 45 sec",weight:"bw",note:"Same as left. Match quality."},
-      {name:"Side Plank Hip Dip — Right",sets:"3 x 12",weight:"bw",note:"Drive the hip hard on each rep."},
-      {name:"Russian Twist — Feet Elevated",sets:"3 x 25 total",weight:"bw",note:"Feet off the floor, rotate fully side to side. Touch the floor each side. Controlled — don't swing."}
-    ]},
-    {blockHeader:"Block 3 — Lower Core",blockRest:"60 sec between rounds · 3 rounds",exercises:[
-      {name:"Hanging Leg Raise (bar) or Floor Leg Raise",sets:"3 x 15",weight:"bw",note:"Bar: full hang, raise legs to 90° or above with control. Floor: lower back stays pressed down, controlled lowering — never let it arch.",tags:["bar"]},
-      {name:"Flutter Kick",sets:"3 x 30 sec",weight:"bw",note:"Legs 6 inches off ground. Small fast kicks. Lower back stays flat. If it arches — raise legs higher."},
-      {name:"Reverse Crunch",sets:"3 x 15",weight:"bw",note:"Bring knees to chest, then push hips toward ceiling. Lower controlled. Lower ab emphasis."},
-      {name:"Hollow Body Rock",sets:"3 x 20 rocks",weight:"bw",note:"Hold hollow position and rock forward/backward. Maintain perfect shape. Do not break."}
-    ]},
-    {blockHeader:"Block 4 — Maximum Finisher",blockRest:"NO REST — straight through once",exercises:[
-      {name:"Plank — Hard Hold",sets:"1 x 60 sec",weight:"bw",note:"This is the last block — everything has to be intentional. Squeeze every muscle. Breathe through it."},
-      {name:"Mountain Climber — Fast",sets:"1 x 30 sec",weight:"bw",note:"Drive knees as fast as possible without losing hip level. Straight into next."},
-      {name:"V-Up",sets:"1 x 15 reps",weight:"bw",note:"Full range — both arms and legs meet in the middle at the top."},
-      {name:"Side Plank — Left",sets:"1 x 45 sec",weight:"bw",note:"Hold it. This is the hardest point of the session."},
-      {name:"Side Plank — Right",sets:"1 x 45 sec",weight:"bw",note:"Match left. No dropping early."},
-      {name:"Dragon Flag — To Failure",sets:"1 x max reps",weight:"bw",note:"End of session. Go until you cannot maintain the position. This is your measure — track it each week."}
-    ]}
-  ]}
+<!-- ============ MAIN TAB SWITCHER ============ -->
+<script>
+(function () {
+  "use strict";
+  var KEY = "training_maintab";
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".mainbar-tab"));
+  var apps = {
+    lift: document.getElementById("app-lift"),
+    skill: document.getElementById("app-skill")
+  };
+  function show(which) {
+    if (!apps[which]) which = "lift";
+    Object.keys(apps).forEach(function (k) { apps[k].hidden = k !== which; });
+    tabs.forEach(function (b) {
+      b.setAttribute("aria-selected", b.dataset.app === which ? "true" : "false");
+    });
+    try { localStorage.setItem(KEY, which); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (b) {
+    b.addEventListener("click", function () { show(b.dataset.app); });
+  });
+  var init = "lift";
+  try { init = localStorage.getItem(KEY) || "lift"; } catch (e) {}
+  show(init);
+})();
+</script>
+
+<!-- ============ APP 1 SCRIPT — LIFTING ============ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ---- Day cards: sync aria-expanded on summaries ---- */
+  var days = Array.prototype.slice.call(document.querySelectorAll("details.day"));
+  days.forEach(function (d) {
+    var s = d.querySelector("summary");
+    d.addEventListener("toggle", function () {
+      s.setAttribute("aria-expanded", d.open ? "true" : "false");
+    });
+  });
+
+  /* ---- Expand all / collapse all ---- */
+  var toggleAll = document.getElementById("toggle-all");
+  function allOpen() { return days.every(function (d) { return d.open; }); }
+  function refreshToggleLabel() {
+    var open = allOpen();
+    toggleAll.textContent = open ? "Collapse All" : "Expand All";
+    toggleAll.setAttribute("aria-pressed", open ? "true" : "false");
+  }
+  toggleAll.addEventListener("click", function () {
+    var target = !allOpen();
+    days.forEach(function (d) { d.open = target; });
+    refreshToggleLabel();
+  });
+  days.forEach(function (d) { d.addEventListener("toggle", refreshToggleLabel); });
+  refreshToggleLabel();
+
+  /* ---- Deload checklist counter (in-memory only) ---- */
+  var boxes = Array.prototype.slice.call(
+    document.querySelectorAll("#checklist input[type=checkbox]")
+  );
+  var counter = document.getElementById("check-counter");
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function refreshCounter() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    counter.textContent = pad(done) + " / " + pad(boxes.length);
+  }
+  boxes.forEach(function (b) { b.addEventListener("change", refreshCounter); });
+  refreshCounter();
+
+  /* ---- Tabs: one section visible at a time ---- */
+  var links = Array.prototype.slice.call(document.querySelectorAll(".topnav a"));
+  var sections = links
+    .map(function (a) { return document.querySelector(a.getAttribute("href")); })
+    .filter(Boolean);
+  var navInner = document.querySelector(".topnav .nav-inner");
+  function showTab(id) {
+    if (!document.getElementById(id)) id = sections[0].id;
+    sections.forEach(function (s) {
+      s.classList.toggle("tab-hidden", s.id !== id);
+    });
+    links.forEach(function (a) {
+      var on = a.getAttribute("href") === "#" + id;
+      a.classList.toggle("active", on);
+      if (on) {
+        a.setAttribute("aria-current", "page");
+        /* keep the active link visible inside the horizontally scrollable nav */
+        var left = a.offsetLeft, right = left + a.offsetWidth;
+        if (left < navInner.scrollLeft) navInner.scrollLeft = left;
+        else if (right > navInner.scrollLeft + navInner.clientWidth)
+          navInner.scrollLeft = right - navInner.clientWidth;
+      } else {
+        a.removeAttribute("aria-current");
+      }
+    });
+    /* Expand All only applies to the day cards on the Lifts tab */
+    toggleAll.style.display = id === "lifts" ? "" : "none";
+    window.scrollTo(0, 0);
+  }
+  links.forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      var id = a.getAttribute("href").slice(1);
+      if (history.replaceState) history.replaceState(null, "", "#" + id);
+      showTab(id);
+    });
+  });
+  window.addEventListener("hashchange", function () {
+    showTab(location.hash.slice(1));
+  });
+  showTab(location.hash ? location.hash.slice(1) : sections[0].id);
+
+  /* ---- Print: expand everything, then restore ---- */
+  var wasClosed = [];
+  function openAllForPrint() {
+    wasClosed = days.filter(function (d) { return !d.open; });
+    wasClosed.forEach(function (d) { d.open = true; });
+  }
+  function restoreAfterPrint() {
+    wasClosed.forEach(function (d) { d.open = false; });
+    wasClosed = [];
+    refreshToggleLabel();
+  }
+  window.addEventListener("beforeprint", openAllForPrint);
+  window.addEventListener("afterprint", restoreAfterPrint);
+  if (window.matchMedia) {
+    var mql = window.matchMedia("print");
+    var onMql = function (e) { if (e.matches) openAllForPrint(); else restoreAfterPrint(); };
+    if (mql.addEventListener) mql.addEventListener("change", onMql);
+    else if (mql.addListener) mql.addListener(onMql);
+  }
+})();
+</script>
+
+<!-- ============ APP 2 SCRIPT — SKILLWORK ============ -->
+<script>
+(function () {
+/* ============================================================
+   STATE — everything persists in localStorage under one key.
+   ============================================================ */
+const LS_KEY = 'skillwork_v1';
+const S = Object.assign({
+  week: 1,                 // 1–4 block wave
+  checks: {},              // { 'YYYY-MM-DD': { drillId: true, 'today-bh': true } }
+  defLog: [],              // [ { date:'YYYY-MM-DD', text } ]
+  autoAdvance: true,
+}, JSON.parse(localStorage.getItem(LS_KEY) || '{}'));
+
+const todayKey = () => new Date().toISOString().slice(0,10);
+const save = () => localStorage.setItem(LS_KEY, JSON.stringify(S));
+
+const $  = s => document.querySelector(s);
+const dayChecks = () => (S.checks[todayKey()] = S.checks[todayKey()] || {});
+
+/* ============================================================
+   WEEK WAVE — the selector reshapes every domain.
+   ============================================================ */
+const WEEKS = {
+  1: { name:'Foundation',
+       shoot:'Form rebuild — close range, high makes.',
+       handle:'Control + off-hand foundation. Own the ball before you speed it up.',
+       defend:'Stance, slides, closeouts — solo work.',
+       speed:'Mechanics at ~90%. Crisp positions, full recovery.' },
+  2: { name:'Build',
+       shoot:'Add footwork + catch-and-shoot off movement.',
+       handle:'Speed, pockets, and combos. Push the tempo.',
+       defend:'Mirror work + 1v1 with a constraint.',
+       speed:'Intensity to ~95%, add change of direction.' },
+  3: { name:'Peak',
+       shoot:'Game shots at game speed. Extend the range.',
+       handle:'Game-craft chains into a finish. Everything ends in a decision.',
+       defend:'Live 1v1 + shell / help-and-recover.',
+       speed:'Max intent. Make it competitive.' },
+  4: { name:'Deload',
+       shoot:'Easy rhythm shooting. Feel good, stay smooth.',
+       handle:'Light maintenance rotation. Short and clean.',
+       defend:'Walk-through concepts, low load.',
+       speed:'Sharpness only, low volume.' },
+};
+
+/* Which shooting step the week emphasizes (see SHOOT_STEPS) */
+const WEEK_SHOOT_STEP = { 1:0, 2:1, 3:2, 4:-1 }; // -1 = deload note
+
+/* Defense sample weekly touch */
+const DEF_TOUCH = [
+  '<b>Day 1</b> — stance / slides / closeouts (20 min)',
+  '<b>Day 2</b> — mirror + 1v1 + deflections (15 min)',
+  '<b>Day 3</b> — shell + pick-and-roll reps (15 min)',
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────────────────────────────────────
-let currentView = 'pf';
-let currentWeek = 1;
-let openDays    = new Set();
-let openForms   = new Set();
+/* ============================================================
+   BALL HANDLING — four 10-minute workouts. Edit drills here.
+   secs:N          → timed drill (one timer segment)
+   sides:'hand'    → timed twice: left/right hand|side|foot
+   reps:'…'        → rep-based, listed but not timed
+   ============================================================ */
+const HANDLE_PARTS = [
+  { title:'Part 1 · The Control Foundation', mins:10,
+    goal:'Building the "tightness" and body awareness required for any advanced move.',
+    drills:[
+      { n:'Front pounds',          note:'in front of the foot',  secs:30, sides:'hand' },
+      { n:'Behind pounds',         note:'behind the foot',       secs:30, sides:'hand' },
+      { n:'Pound-Cross',           note:'pound series',          secs:30 },
+      { n:'Pound-Between',         note:'pound series',          secs:30 },
+      { n:'Pound-Behind',          note:'pound series',          secs:30 },
+      { n:'Over-and-Back',         note:'touch drill · front of foot',  secs:30, sides:'hand' },
+      { n:'Front-to-Back',         note:'touch drill · side of foot',   secs:30, sides:'hand' },
+      { n:"Pound V's",             note:'touch drill',           secs:30, sides:'hand' },
+      { n:'Double-pat crossover',                                secs:30 },
+      { n:'Between-Behind',        note:'control combo',         secs:30, sides:'hand' },
+      { n:'Between-Between',       note:'control combo',         secs:30, sides:'hand' },
+      { n:'Between-Cross',         note:'control combo',         secs:30, sides:'hand' },
+    ]},
+  { title:'Part 2 · Off-Hand Mastery', mins:10,
+    goal:'Mastering the weak hand so it feels as natural as the dominant one.',
+    drills:[
+      { n:'Pound/Kill series', note:'50 pounds front of foot · 50 kill dribbles ankle height · 50 pounds behind — both hands', reps:'150/hand' },
+      { n:'Weak-hand focus',   note:'repeat the series twice for your off-hand',  reps:'×2' },
+      { n:'Behind-the-Back isolation', note:'off-hand on a wall for stability if needed', secs:60 },
+      { n:'Between-the-Legs isolation',                          secs:60 },
+      { n:'Crossover isolation',                                 secs:60 },
+      { n:'Staggered splits',  note:'between-the-legs · L foot forward, then R forward', secs:60 },
+    ]},
+  { title:'Part 3 · Speed & Pocket Control', mins:10,
+    goal:'Learning to suspend the ball in the "pocket" and manipulate speed.',
+    drills:[
+      { n:'Around-the-Leg fast',   note:'Between-Cross around the leg, max speed', secs:60, sides:'side' },
+      { n:'Between-Behind speed',  note:'continuous combos',     secs:60, sides:'hand' },
+      { n:'Pound pockets',         note:'hold the ball in the hip pocket', secs:60, sides:'hand' },
+      { n:'Pound-Pocket-Between',  note:'pocket combo series',   secs:60 },
+      { n:'Pound-Pocket-Behind',   note:'pocket combo series',   secs:60 },
+      { n:'Pound-Pocket-Cross',    note:'pocket combo series',   secs:60 },
+      { n:'Speed burnout',         note:'Pound-Pocket into a Between-Behind speed burst', secs:60 },
+    ]},
+  { title:'Part 4 · Rhythm & Flow', mins:10,
+    goal:'Finding your "flow" and learning to manipulate the ball with varying rhythm.',
+    drills:[
+      { n:'Behind-the-Foot rhythm', note:'pound behind the foot', secs:60, sides:'foot' },
+      { n:'Lateral flows',          note:'behind the foot to the opposite side', secs:60, sides:'side' },
+      { n:'Pace-change combos',     note:'Behind-Across-Behind-Between · slow to fast', secs:60, sides:'side' },
+      { n:'Behind-Across-Between-Cross', note:'flow finisher',   secs:60 },
+      { n:'Behind-Cross-Behind-Cross',   note:'flow finisher',   secs:60 },
+    ]},
+  { title:'Part 5 · Follow-Along Burnout — Jason Preston', mins:5,
+    goal:'"The workout that changed my handle" — one straight ~5-minute run, no rest between drills.',
+    drills:[
+      { n:'Pounds high',            note:'shoulder height',       secs:15, sides:'hand' },
+      { n:'Waist pounds',                                          secs:15, sides:'hand' },
+      { n:'Pound V burnout',        note:'right hand · push through the burn', secs:60 },
+      { n:'Pound V front-to-back',                                 secs:15, sides:'hand' },
+      { n:'Right-foot drill',       note:'behind / in front of the foot', secs:30 },
+      { n:'Left-foot drill',        note:'front / back of the foot', secs:25 },
+      { n:'Behind–Front–Across–Back',                              secs:15, sides:'hand' },
+      { n:'Behind the right foot',  note:'work the negative space', secs:15 },
+      { n:'Flip behind the left leg',                              secs:10 },
+      { n:'Pound cross in front',                                  secs:15 },
+      { n:'Pound between',                                         secs:15 },
+      { n:'Pound behind',                                          secs:15 },
+      { n:'Freestyle',              note:'everything you\'ve got — last 15 seconds', secs:15 },
+    ]},
+];
+/* stable ids for auto-check persistence */
+HANDLE_PARTS.forEach((p,pi) => p.drills.forEach((d,di) => d.id = 'p'+pi+'d'+di));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VIEW SWITCHING
-// ─────────────────────────────────────────────────────────────────────────────
-function setView(v) {
-  currentView = v;
-  openDays = new Set();
-  openForms = new Set();
-  document.getElementById('btn-pf').classList.toggle('active', v==='pf');
-  document.getElementById('btn-bw').classList.toggle('active', v==='bw');
-  document.getElementById('pf-banner').style.display  = v==='pf' ? '' : 'none';
-  document.getElementById('bw-banner').style.display  = v==='bw' ? '' : 'none';
-  document.getElementById('pf-controls').style.display = v==='pf' ? '' : 'none';
-  document.getElementById('footer').textContent = v==='pf'
-    ? 'Month 3 · Planet Fitness · Log weights · Test vertical on deload week'
-    : 'Bodyweight / Vacation · No equipment required · Day 6 = Core Destroyer';
-  renderGrid();
+/* Shooting steps (week selector highlights the active one) */
+const SHOOT_STEPS = [
+  { t:'Step 1 · Form Rebuild', d:[
+    '1-hand form shooting — 2–3 × 25 makes',
+    'Guide hand on — 2 × 25 makes',
+    'Add footwork — 2 × 25 makes',
+    'Back it up by feel',
+  ]},
+  { t:'Step 2 · Game Shots & Footwork', d:[
+    'Catch-and-shoot — off the pass, feet ready',
+    'Off-dribble pull-ups',
+    'Relocations — Around-the-World / 5-spot',
+    'Game-speed reps — sprint into every shot',
+  ]},
+  { t:'Step 3 · Range Extension', d:[
+    'Only once mechanics hold',
+    'Legs, not arm',
+    'Step back in the moment form breaks',
+  ]},
+];
+
+/* Defense solo drills */
+const DEF_SOLO = [
+  { id:'d01', n:'Lateral slides',            secs:30, rounds:4, dose:'4 × 30s' },
+  { id:'d02', n:'Zig-zag slide + drop step', reps:'5 trips' },
+  { id:'d03', n:'Closeout combo', note:'slide 5yd → sprint 2yd → chop → contest', reps:'10/side ×2' },
+  { id:'d04', n:'Reaction starts',           reps:'8' },
+  { id:'d05', n:'Verticality contests',      reps:'10' },
+];
+
+/* Speed & agility groups */
+const SPEED_GROUPS = [
+  { name:'Group A · First Step & Acceleration', drills:[
+    { id:'s01', n:'Wall drive holds',              reps:'3 × 5/leg' },
+    { id:'s02', n:'Wall drive switches',           reps:'3 × 6' },
+    { id:'s03', n:'3-point start sprints',         reps:'6 × 10yd' },
+    { id:'s04', n:'Falling start → sprint',        reps:'5 × 10yd' },
+    { id:'s05', n:'First-step from triple threat', reps:'6 × each' },
+  ]},
+  { name:'Group B · Change of Direction & Deceleration', drills:[
+    { id:'s06', n:'Snapdown to stick',       reps:'3 × 5' },
+    { id:'s07', n:'Lateral bound → stick',   reps:'3 × 4/side' },
+    { id:'s08', n:'Zig-zag cuts',            reps:'5 trips' },
+    { id:'s09', n:'5-10-5 pro agility',      reps:'4–6' },
+    { id:'s10', n:'Skater bounds',           reps:'3 × 6/side' },
+  ]},
+];
+
+const COURT_BLOCK = [
+  { label:'Wall drives + falling starts',        secs:240 },
+  { label:'3-pt starts + first-step',            secs:360 },
+  { label:'Zig-zag + 5-10-5 + lateral bounds',   secs:360 },
+  { label:'Reset + light pogos',                 secs:120 },
+];
+
+/* ============================================================
+   TIMER — Web Audio beep + vibration, sequence auto-advance.
+   Segments carry the drill id so finished drills check off
+   automatically in the list behind the overlay.
+   ============================================================ */
+const T = { seq:[], idx:0, left:0, iv:null, paused:false, partKey:null };
+let audioCtx = null;
+
+function beep(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    [0, .25].forEach(dt => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.frequency.value = 880; g.gain.value = .25;
+      o.start(audioCtx.currentTime + dt); o.stop(audioCtx.currentTime + dt + .18);
+    });
+  }catch(e){}
+  if (navigator.vibrate) navigator.vibrate([180,80,180]);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PF WEEK TABS
-// ─────────────────────────────────────────────────────────────────────────────
-function setWeek(w) {
-  currentWeek = w;
-  openDays = new Set();
-  openForms = new Set();
-  document.querySelectorAll('.week-tab').forEach((t,i) => t.classList.toggle('active', i+1===w));
-  renderGrid();
-}
-function renderWeekTabs() {
-  const labels = ['Week 1 — Foundation','Week 2 — Build','Week 3 — Peak','Week 4 — Deload'];
-  document.getElementById('week-tabs').innerHTML = labels.map((l,i) =>
-    '<div class="week-tab'+(i===0?' active':'')+'" onclick="setWeek('+(i+1)+')">'+l+'</div>'
-  ).join('');
-  document.getElementById('week-note').textContent = pfProgram[1].note;
+const fmt = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+
+function tRender(){
+  const seg = T.seq[T.idx];
+  $('#tSeg').textContent  = seg ? seg.label : '';
+  $('#tTime').textContent = fmt(T.left);
+  $('#tNext').textContent = T.seq[T.idx+1] ? 'next: ' + T.seq[T.idx+1].label : 'last drill';
+  $('#tProg').textContent = (T.idx+1) + ' / ' + T.seq.length;
+  $('#tPause').textContent = T.paused ? 'Resume' : 'Pause';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LOGGING (PF only)
-// ─────────────────────────────────────────────────────────────────────────────
-function skey(week, dayIdx, exName) {
-  return 'm3_w'+week+'_d'+dayIdx+'_'+exName.replace(/\W+/g,'_').substring(0,30);
+/* mark the drill behind a finished segment as done */
+function markSeg(i){
+  const id = T.seq[i] && T.seq[i].id;
+  if (id){ dayChecks()[id] = true; save(); renderAll(); }
 }
-function getLogs(week, dayIdx, exName) {
-  try { const r=localStorage.getItem(skey(week,dayIdx,exName)); return r?JSON.parse(r):[]; } catch(e){ return []; }
-}
-function saveLogs(week, dayIdx, exName, logs) {
-  try { localStorage.setItem(skey(week,dayIdx,exName),JSON.stringify(logs)); } catch(e){}
-}
-function addLog(week, dayIdx, exName, uid) {
-  const w=document.getElementById('lw-'+uid),s=document.getElementById('ls-'+uid);
-  const r=document.getElementById('lr-'+uid),n=document.getElementById('ln-'+uid);
-  const weight=w?w.value.trim():'',sets=s?s.value.trim():'',reps=r?r.value.trim():'',note=n?n.value.trim():'';
-  if(!weight&&!sets&&!reps&&!note) return;
-  const logs=getLogs(week,dayIdx,exName);
-  logs.push({weight,sets,reps,note,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
-  saveLogs(week,dayIdx,exName,logs);
-  openForms.delete(uid);
-  renderGrid();
-}
-function deleteLog(week, dayIdx, exName, idx) {
-  const logs=getLogs(week,dayIdx,exName); logs.splice(idx,1);
-  saveLogs(week,dayIdx,exName,logs); renderGrid();
-}
-function toggleDay(idx)  { openDays.has(idx)?openDays.delete(idx):openDays.add(idx); renderGrid(); }
-function toggleForm(uid) { openForms.has(uid)?openForms.delete(uid):openForms.add(uid); renderGrid(); }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-function wBadge(w) {
-  const m={heavy:['w-heavy','Heavy'],medium:['w-medium','Moderate'],light:['w-light','Light'],bw:['w-bw','Bodyweight'],iso:['w-iso','Isometric']};
-  const [c,l]=m[w]||['w-bw','—'];
-  return '<span class="ex-weight-badge '+c+'">'+l+'</span>';
-}
-function tagHtml(tags) {
-  if(!tags||!tags.length) return '';
-  const m={outside:['tag-outside','outdoor'],superset:['tag-superset','tri-set'],core:['tag-core','core'],pap:['tag-pap','PAP/jump'],bar:['tag-bar','bar rec.'],power:['tag-power','power']};
-  return tags.map(t=>{ const [c,l]=m[t]||['tag-outside',t]; return '<span class="tag '+c+'">'+l+'</span>'; }).join('');
+/* a completed ball-handling part completes the day's must-do */
+function finishPart(){
+  if (T.partKey && PARTS[T.partKey] && PARTS[T.partKey].bh){
+    dayChecks()['today-bh'] = true; save(); renderAll();
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDER PF EXERCISE (with logging)
-// ─────────────────────────────────────────────────────────────────────────────
-function renderPFExercise(ex, week, dayIdx, secIdx, exIdx) {
-  const uid='w'+week+'d'+dayIdx+'s'+secIdx+'e'+exIdx;
-  const logs=getLogs(week,dayIdx,ex.name);
-  const showForm=openForms.has(uid);
-  const logsHtml=logs.length?'<div class="log-entries">'+logs.map((l,li)=>{
-    const p=[]; if(l.weight)p.push(l.weight+' lbs'); if(l.sets)p.push(l.sets+' sets');
-    if(l.reps)p.push(l.reps+' reps'); if(l.note)p.push(l.note);
-    return '<div class="log-entry"><span class="log-entry-text">'+p.join(' · ')+'</span><span class="log-entry-date">'+l.date+'</span><button class="log-delete" onclick="deleteLog('+week+','+dayIdx+',\''+ex.name.replace(/'/g,"\\'")+'\',' +li+')">×</button></div>';
-  }).join('')+'</div>':'';
-  const formHtml=showForm?`<div class="log-form"><div class="log-form-title">Log this set</div><div class="log-fields"><div class="log-field"><label>Weight (lbs)</label><input id="lw-${uid}" type="number" placeholder="e.g. 135"></div><div class="log-field"><label>Sets</label><input id="ls-${uid}" type="number" placeholder="e.g. 4"></div><div class="log-field"><label>Reps</label><input id="lr-${uid}" type="number" placeholder="e.g. 8"></div><div class="log-field"><label>RIR</label><input id="lr2-${uid}" type="number" placeholder="e.g. 2"></div><div class="log-field full"><label>Notes</label><textarea id="ln-${uid}" placeholder="How it felt, cues..."></textarea></div></div><div class="log-actions"><button class="log-save-btn" onclick="addLog(${week},${dayIdx},'${ex.name.replace(/'/g,"\\'")}','${uid}')">Save</button><button class="log-cancel-btn" onclick="toggleForm('${uid}')">Cancel</button></div></div>`:'';
-  return `<div class="exercise-row" onclick="toggleForm('${uid}')">
-    <div class="ex-top">
-      <div>
-        <div class="ex-name">${ex.name}</div>
-        ${ex.note?'<div class="ex-note">'+ex.note+'</div>':''}
-        ${ex.tags?'<div class="ex-tags">'+tagHtml(ex.tags)+'</div>':''}
-      </div>
-      <div class="ex-badge"><div class="ex-sets-label">${ex.sets}</div>${ex.weight?wBadge(ex.weight):''}</div>
-    </div>
-    <div class="log-area">${logsHtml}<button class="log-toggle-btn">${showForm?'▲ Close':'+ Log weight'}</button>${formHtml}</div>
+function tTick(){
+  if (T.paused) return;
+  T.left--;
+  if (T.left <= 0){
+    beep();
+    markSeg(T.idx);
+    if (T.idx < T.seq.length-1 && S.autoAdvance){ T.idx++; T.left = T.seq[T.idx].secs; }
+    else if (T.idx < T.seq.length-1){ T.paused = true; T.idx++; T.left = T.seq[T.idx].secs; }
+    else { finishPart(); return tStop(); }
+  }
+  tRender();
+}
+
+function startTimer(segments, partKey){
+  T.seq = segments; T.idx = 0; T.left = segments[0].secs; T.paused = false;
+  T.partKey = partKey || null;
+  clearInterval(T.iv); T.iv = setInterval(tTick, 1000);
+  $('#timerOverlay').hidden = false; tRender();
+  // unlock audio on the launching tap
+  try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); audioCtx.resume(); }catch(e){}
+}
+function tStop(){ clearInterval(T.iv); $('#timerOverlay').hidden = true; }
+
+$('#tClose').onclick = tStop;
+$('#tPause').onclick = () => { T.paused = !T.paused; tRender(); };
+$('#tSkip').onclick  = () => {
+  markSeg(T.idx);
+  if (T.idx < T.seq.length-1){ T.idx++; T.left = T.seq[T.idx].secs; tRender(); }
+  else { finishPart(); tStop(); }
+};
+// Back = previous drill with full time (restarts current if on the first)
+$('#tBack').onclick  = () => {
+  if (T.idx > 0) T.idx--;
+  T.left = T.seq[T.idx].secs;
+  tRender();
+};
+$('#tAutoChk').onclick = toggleAuto;
+$('#tAutoChk').onkeydown = e => { if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleAuto(); } };
+function toggleAuto(){
+  S.autoAdvance = !S.autoAdvance; save();
+  $('#tAutoChk').setAttribute('aria-checked', S.autoAdvance);
+  $('#tAutoChk').textContent = S.autoAdvance ? '✓' : '';
+}
+
+/* Build timer segments for one drill (id rides along for auto-check) */
+function drillSegs(d){
+  if (d.rounds) return Array.from({length:d.rounds}, (_,i)=>({ label:`${d.n} — round ${i+1}/${d.rounds}`, secs:d.secs, id:d.id }));
+  if (d.sides)  return [{label:`${d.n} — left ${d.sides}`, secs:d.secs, id:d.id},{label:`${d.n} — right ${d.sides}`, secs:d.secs, id:d.id}];
+  return [{label:d.n, secs:d.secs, id:d.id}];
+}
+
+/* Startable timed sequences: one per ball-handling part + defense slides */
+const PARTS = {};
+HANDLE_PARTS.forEach((p,pi) => {
+  PARTS['P'+pi] = { bh:true, segs: p.drills.filter(d=>d.secs).flatMap(drillSegs) };
+});
+PARTS['D0'] = { segs: drillSegs(DEF_SOLO[0]) };
+const partMins = key => Math.round(PARTS[key].segs.reduce((t,s)=>t+s.secs,0)/60);
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+function drillRowHTML(d){
+  const done = !!dayChecks()[d.id];
+  const dose = d.secs
+    ? (d.dose || (d.sides ? fmtDose(d.secs)+'/'+d.sides : fmtDose(d.secs)))
+    : d.reps;
+  return `<div class="drill ${done?'done':''}">
+    <span class="mark">${done?'✓':'·'}</span>
+    <div class="dname">${d.n}${d.note?`<span class="dnote">${d.note}</span>`:''}</div>
+    <span class="dose">${dose}</span>
   </div>`;
 }
+const fmtDose = s => s % 60 === 0 ? (s/60)+'min' : s+'s';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDER BW EXERCISE (display only)
-// ─────────────────────────────────────────────────────────────────────────────
-function renderBWExercise(ex) {
-  const wmap={bw:'w-bw'};
-  const badge=ex.weight?wBadge(ex.weight):'';
-  return `<div class="exercise-row">
-    <div class="ex-top">
+/* Suggested part for today: cycles P1–P4 through the week (Mon = P1) */
+function suggestedPart(){
+  return ((new Date().getDay() + 6) % 7) % 4;   // 0-based index into HANDLE_PARTS
+}
+
+/* ============================================================
+   RENDER — header, today, tabs
+   ============================================================ */
+function calcStreak(){
+  // streak = consecutive days (ending today or yesterday) where a
+  // ball-handling workout was completed
+  let n = 0; const d = new Date();
+  const done = dt => { const k = dt.toISOString().slice(0,10); return S.checks[k] && S.checks[k]['today-bh']; };
+  if (!done(d)) d.setDate(d.getDate()-1);
+  while (done(d)){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+
+function renderHeader(){
+  const wk = WEEKS[S.week];
+  $('#stStreak').innerHTML = `<b>${calcStreak()}</b>-day streak`;
+  $('#stDay').innerHTML    = `<b>P${suggestedPart()+1}</b> today`;
+  $('#weekName').textContent = wk.name;
+  $('#weekPills').innerHTML = [1,2,3,4].map(w =>
+    `<button class="wk" data-week="${w}" aria-pressed="${w===S.week}">${w}</button>`).join('');
+}
+
+function renderToday(){
+  const wk = WEEKS[S.week];
+  const part = HANDLE_PARTS[suggestedPart()];
+  const bhDone = !!dayChecks()['today-bh'];
+  const items = [
+    { tag:'must', tagText:'Must-do', mins:'10 min', done:bhDone,
+      t:`Ball handling — ${part.title.split(' · ')[0]}`,
+      p:`${part.title.split(' · ')[1]}: ${part.goal} Start it from the Handle tab — or run any other part.` },
+    { tag:'must', tagText:'Must-do · if at a hoop', mins:'15–30 min',
+      t:'Shooting', p:`${wk.shoot}` },
+    { tag:'iftime', tagText:'If time', mins:'10–20 min',
+      t:'Speed/agility or Defense', p:`${wk.speed} — or — ${wk.defend}` },
+  ];
+  $('#todayCards').innerHTML = items.map(it => `
+    <div class="prio">
+      <span class="tag ${it.tag}">${it.tagText}</span>${it.done?'<span class="tag done">✓ Done today</span>':''}
+      <h3>${it.t}</h3><span class="mins">${it.mins}</span>
+      <p>${it.p}</p>
+    </div>`).join('');
+}
+
+function renderHandle(){
+  const wk = WEEKS[S.week], sug = suggestedPart();
+  $('#hFw').textContent = 'W' + S.week; $('#hFocus').textContent = wk.handle;
+  $('#handleWorkouts').innerHTML = HANDLE_PARTS.map((p,pi) => `
+    <div class="card">
+      <h2>${p.title}${pi===sug ? ' · <span style="font-family:var(--mono);font-size:12px">today</span>' : ''}</h2>
+      <p class="sub">${p.mins} min — ${p.goal}</p>
+      ${p.drills.map(drillRowHTML).join('')}
+      <button class="btn ghost" data-runpart="P${pi}">▸ Start · ${partMins('P'+pi)} min timed</button>
+    </div>`).join('');
+  // game-craft unlocks when a workout is completed today
+  $('#gamecraft').open = !!dayChecks()['today-bh'];
+}
+
+function renderShoot(){
+  const wk = WEEKS[S.week];
+  $('#sFw').textContent = 'W' + S.week; $('#sFocus').textContent = wk.shoot;
+
+  // steps, with the week's step highlighted
+  const active = WEEK_SHOOT_STEP[S.week];
+  $('#shootSteps').innerHTML =
+    (active === -1 ? `<div class="callout" style="margin:0 0 16px"><b>Deload week:</b> easy rhythm shooting only — short sessions, smooth reps, stop while it feels good.</div>` : '') +
+    SHOOT_STEPS.map((s,i) => `
       <div>
-        <div class="ex-name">${ex.name}</div>
-        ${ex.note?'<div class="ex-note">'+ex.note+'</div>':''}
-        ${ex.tags?'<div class="ex-tags">'+tagHtml(ex.tags)+'</div>':''}
-      </div>
-      <div class="ex-badge"><div class="ex-sets-label">${ex.sets}</div>${badge}</div>
-    </div>
-  </div>`;
+        <div class="eyebrow ${i===active?'active':''}">${s.t}${i===active?' · this week':''}</div>
+        <ul class="plainlist">${s.d.map(x=>`<li>${x}</li>`).join('')}</ul>
+      </div>`).join('');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDER SECTION
-// ─────────────────────────────────────────────────────────────────────────────
-function renderSection(sec, isPF, week, dayIdx, secIdx) {
-  // Block header (core-x day)
-  if (sec.blockHeader) {
-    const inner = sec.exercises.map(ex => renderBWExercise(ex)).join('');
-    return `<div class="block-header">${sec.blockHeader}<span class="block-rest">${sec.blockRest}</span></div>${inner}`;
-  }
-  // Core block
-  if (sec.isCoreBlock) {
-    return `<div class="core-block"><div class="core-block-title"><span style="color:var(--accent)">●</span> ${sec.title}</div>`+
-      sec.exercises.map(ex=>`<div class="core-row"><div class="core-row-left"><div class="core-row-name">${ex.name}</div>${ex.note?'<div class="core-row-note">'+ex.note+'</div>':''}</div><span class="core-row-sets">${ex.sets}</span></div>`).join('')+`</div>`;
-  }
-  // Circuit
-  if (sec.isCircuit) {
-    return `<div class="section-label">${sec.title}</div><div class="circuit-group">`+
-      sec.exercises.map(ex=>renderBWExercise(ex)).join('')+`</div>`+
-      (sec.circuitNote?`<div class="circuit-note">${sec.circuitNote}</div>`:'');
-  }
-  // Isometric block
-  if (sec.isIsoBlock) {
-    const inner = isPF
-      ? sec.exercises.map((ex,ei)=>renderPFExercise(ex,week,dayIdx,secIdx,ei)).join('')
-      : sec.exercises.map(ex=>renderBWExercise(ex)).join('');
-    return `<div class="section-label" style="color:var(--accent3);font-weight:700">◆ ${sec.title}</div><div class="iso-group">${inner}</div>`;
-  }
-  // Superset / Tri-set
-  if (sec.isSuperset) {
-    const inner = isPF
-      ? sec.exercises.map((ex,ei)=>renderPFExercise(ex,week,dayIdx,secIdx,ei)).join('')
-      : sec.exercises.map(ex=>renderBWExercise(ex)).join('');
-    return `<div class="section-label">${sec.title}</div><div class="superset-group">${inner}</div>`;
-  }
-  // Standard
-  const inner = isPF
-    ? sec.exercises.map((ex,ei)=>renderPFExercise(ex,week,dayIdx,secIdx,ei)).join('')
-    : sec.exercises.map(ex=>renderBWExercise(ex)).join('');
-  return `<div class="section-label">${sec.title}</div>${inner}`;
+function renderDefend(){
+  const wk = WEEKS[S.week];
+  $('#dFw').textContent = 'W' + S.week; $('#dFocus').textContent = wk.defend;
+  $('#defSolo').innerHTML = `<div class="eyebrow">Solo drills</div>` + DEF_SOLO.map(drillRowHTML).join('')
+    + `<button class="btn ghost" data-runpart="D0">▸ Start lateral slides · 4 × 30s</button>`;
+  $('#defWeekTouch').innerHTML = DEF_TOUCH.map(t=>`<li>${t}</li>`).join('');
+  $('#logList').innerHTML = S.defLog.slice().reverse().map((e,i) => `
+    <div class="logentry">
+      <button class="del" data-dellog="${S.defLog.length-1-i}" aria-label="Delete entry">delete</button>
+      <time>${e.date}</time>${e.text.replace(/</g,'&lt;')}
+    </div>`).join('') || '<p class="note" style="margin-top:12px">No entries yet — the log starts working when you do.</p>';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDER GRID
-// ─────────────────────────────────────────────────────────────────────────────
-function renderGrid() {
-  const isPF = currentView === 'pf';
-  const days = isPF ? pfProgram[currentWeek].days : bwDays;
-  if (isPF) document.getElementById('week-note').textContent = pfProgram[currentWeek].note;
-
-  document.getElementById('day-grid').innerHTML = days.map((day, di) => {
-    const isOpen = openDays.has(di);
-    const pillCls = 'pill-' + day.type;
-    const bodyContent = isOpen
-      ? day.sections.map((s,si)=>renderSection(s,isPF,currentWeek,di,si)).join('')
-      : '';
-    return `<div class="day-card">
-      <div class="day-header" onclick="toggleDay(${di})">
-        <div class="day-header-left">
-          <span class="day-pill ${pillCls}">${day.label}</span>
-          <div><div class="day-name">${day.name}</div><div class="day-subtitle">${day.subtitle}</div></div>
-        </div>
-        <div class="day-meta">
-          <span class="time-badge">${day.time}</span>
-          <span class="chevron ${isOpen?'open':''}">▼</span>
-        </div>
-      </div>
-      <div class="day-body ${isOpen?'open':''}">${bodyContent}</div>
-    </div>`;
-  }).join('');
+function renderSpeed(){
+  const wk = WEEKS[S.week];
+  $('#spFw').textContent = 'W' + S.week; $('#spFocus').textContent = wk.speed;
+  $('#speedGroups').innerHTML = SPEED_GROUPS.map(g =>
+    `<div class="eyebrow">${g.name}</div>${g.drills.map(drillRowHTML).join('')}`).join('');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────────────────────────────────────
-renderWeekTabs();
-renderGrid();
+function renderAll(){
+  renderHeader(); renderToday(); renderHandle(); renderShoot(); renderDefend(); renderSpeed();
+  $('#tAutoChk').setAttribute('aria-checked', S.autoAdvance);
+  $('#tAutoChk').textContent = S.autoAdvance ? '✓' : '';
+}
+
+/* ============================================================
+   FREE-THROW PRESSURE SET (make 8/10 or restart) — session-only
+   ============================================================ */
+let ft = [];   // array of true(make)/false(miss), max 10
+function renderFT(msg, cls){
+  $('#ftTally').innerHTML = Array.from({length:10}, (_,i) =>
+    `<span class="ftdot ${ft[i]===true?'make':ft[i]===false?'miss':''}"></span>`).join('');
+  const el = $('#ftMsg'); el.textContent = msg || ''; el.className = 'ftmsg ' + (cls||'');
+}
+function ftShot(made){
+  ft.push(made);
+  const misses = ft.filter(x=>!x).length, makes = ft.length - misses;
+  if (misses > 2){ ft = []; return renderFT('Miss #3 — 8/10 is gone. Restart.', 'no'); }
+  if (ft.length === 10){ ft = []; return renderFT(`Set passed — ${makes}/10 ✓ Go again.`, 'ok'); }
+  renderFT(`${makes} makes · ${misses} ${misses===1?'miss':'misses'} · ${10-ft.length} left`);
+}
+$('#ftMake').onclick = () => ftShot(true);
+$('#ftMiss').onclick = () => ftShot(false);
+
+/* ============================================================
+   EVENTS (delegated)
+   ============================================================ */
+document.addEventListener('click', e => {
+  const t = e.target;
+
+  // tabs
+  if (t.dataset.tab){
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b===t));
+    document.querySelectorAll('#app-skill main > section').forEach(s => s.hidden = s.id !== 'tab-'+t.dataset.tab);
+    window.scrollTo({top:0});
+  }
+  // week selector
+  if (t.dataset.week){ S.week = +t.dataset.week; save(); renderAll(); }
+
+  // start a timed part (ball-handling workout or defense slides)
+  if (t.dataset.runpart){ startTimer(PARTS[t.dataset.runpart].segs, t.dataset.runpart); }
+
+  // delete log entry
+  if (t.dataset.dellog !== undefined){
+    S.defLog.splice(+t.dataset.dellog, 1); save(); renderDefend();
+  }
+});
+
+/* defensive log */
+$('#logSave').onclick = () => {
+  const txt = $('#logInput').value.trim();
+  if (!txt) return;
+  S.defLog.push({ date: todayKey(), text: txt });
+  $('#logInput').value = '';
+  save(); renderDefend();
+};
+
+/* week controls — instant, no confirm dialog (blocked in some browsers) */
+$('#btnAdvance').onclick = () => {
+  S.week = S.week % 4 + 1;
+  save(); renderAll();
+};
+
+/* 18-min court block */
+$('#btnCourtBlock').onclick = () => startTimer(COURT_BLOCK);
+
+/* go */
+renderAll(); renderFT();
+})();
 </script>
+
 </body>
 </html>
