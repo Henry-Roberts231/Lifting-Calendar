@@ -288,6 +288,31 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
   }
   .engine ul li::before { content: "▸"; font-weight: 700; }
 
+  /* ============ CLEAN LADDER ============ */
+  .ladderwrap { overflow-x: auto; margin: 18px 0 0; }
+  .ladder {
+    list-style: none; counter-reset: rung;
+    display: flex; align-items: flex-end;
+    min-width: 660px;
+  }
+  .ladder .rung {
+    counter-increment: rung;
+    flex: 1; border: var(--rule2); padding: 10px 12px 12px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    line-height: 1.3;
+  }
+  .ladder .rung + .rung { margin-left: -2px; }
+  .ladder .rung::before {
+    content: counter(rung, decimal-leading-zero) " ▸";
+    display: block; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .ladder .rung:nth-child(2) { padding-top: 24px; }
+  .ladder .rung:nth-child(3) { padding-top: 38px; }
+  .ladder .rung:nth-child(4) { padding-top: 52px; }
+  .ladder .rung:nth-child(5) { padding-top: 66px; background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .ladder .rung:nth-child(5)::before { content: counter(rung, decimal-leading-zero) " ×"; }
+
   /* ============ RECOVERY ============ */
   .two-rules { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
   @media (max-width: 640px) { .two-rules { grid-template-columns: 1fr; } }
@@ -590,6 +615,8 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
     <a href="#split">Week Split</a>
     <a href="#knee">Knee Protocol</a>
     <a href="#lifts">Lifts</a>
+    <a href="#cleans">Cleans</a>
+    <a href="#sprints">Sprints</a>
     <a href="#arc">4-Week Arc</a>
     <a href="#progress">Progression</a>
     <a href="#recovery">Recovery</a>
@@ -646,18 +673,18 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
       <table>
         <caption>Mon–Fri structure</caption>
         <thead>
-          <tr><th scope="col">Day</th><th scope="col">Focus</th><th scope="col">Jump / Power</th><th scope="col">Court / Speed</th><th scope="col">CNS Load</th></tr>
+          <tr><th scope="col">Day</th><th scope="col">Focus</th><th scope="col">Athletic Work (fresh, first)</th><th scope="col">Court / Speed</th><th scope="col">CNS</th></tr>
         </thead>
         <tbody>
-          <tr><th scope="row">MON</th><td>Upper (chest+back+shoulders+arms)</td><td>—</td><td>legs fresh → best day for speed/court</td><td class="num">Low</td></tr>
-          <tr><th scope="row">TUE</th><td><strong>LOWER POWER + JUMP (primary)</strong></td><td>low-vol plyo → squat (PAP) → trap-bar jump</td><td>keep court light today</td><td class="num"><strong>HIGH</strong></td></tr>
-          <tr><th scope="row">WED</th><td>Push (chest+shoulders+triceps)</td><td>—</td><td>legs recovered → 2nd-best speed/court day</td><td class="num">Low</td></tr>
-          <tr><th scope="row">THU</th><td>Pull (back day + biceps)</td><td>light pogos only</td><td>light only</td><td class="num">Low</td></tr>
-          <tr><th scope="row">FRI</th><td>Legs (single-leg + posterior)</td><td>light reactive dose</td><td>—</td><td class="num">Mod</td></tr>
+          <tr><th scope="row">MON</th><td>Upper</td><td>—</td><td>legs fresh → light court OK</td><td class="num">Low</td></tr>
+          <tr><th scope="row">TUE</th><td><strong>Lower A — Accel + Power</strong></td><td>drills → plyo → short accel sprints → clean → squat</td><td>keep court light</td><td class="num"><strong>HIGH</strong></td></tr>
+          <tr><th scope="row">WED</th><td>Push</td><td>—</td><td>legs recovered → light court OK</td><td class="num">Low</td></tr>
+          <tr><th scope="row">THU</th><td>Pull</td><td>light pogos only</td><td>light only</td><td class="num">Low</td></tr>
+          <tr><th scope="row">FRI</th><td><strong>Lower B — Reactive + Posterior</strong></td><td>drills → light reactive → short sprints → clean-pull → squat</td><td>—</td><td class="num">Mod–High</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="smallnote" style="margin-top:14px">Note: court skill work is near-daily and mostly low intensity — fine. Keep the HARDEST court sessions off Tuesday; don't stack a max court day on Friday legs.</p>
+    <p class="smallnote" style="margin-top:14px">All sprint + jump + Olympic-lift + heavy-squat work is consolidated onto Tue and Fri (48h+ apart), done first while fresh. Research caps quality CNS/speed work at ~2–3 sessions/week — max-effort work needs ~48h recovery, and higher plyo frequency yields worse jump gains than moderate frequency. Group the hard days, protect the easy ones. Manage hard/high-volume court sessions the same way — keep them off Tue and don't stack on Fri.</p>
   </div>
 </section>
 
@@ -725,8 +752,8 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
       <summary aria-expanded="true">
         <span class="day-glyph" aria-hidden="true">TUE</span>
         <span>
-          <span class="day-title">Lower Power + Jump<span class="day-badge">Centerpiece</span></span>
-          <span class="day-sub" style="display:block">Order: knee ISO primer → dynamic prep → plyo (fresh) → strength</span>
+          <span class="day-title">Lower A: Acceleration + Power<span class="day-badge">Centerpiece</span></span>
+          <span class="day-sub" style="display:block">Knee ISO → dynamic prep + sprint drills → plyo → accel sprints → Olympic lift → squat → posterior → calf (all explosive work fresh)</span>
         </span>
         <span class="day-marker" aria-hidden="true"></span>
       </summary>
@@ -738,15 +765,16 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
             </thead>
             <tbody>
               <tr><td class="num">1</td><td>Plyo (landings + extensive)</td><td class="setrep">~40–60 contacts</td><td>Pogos, line hops, low box jumps stepping down, snapdown-to-stick. Crisp, silent, max intent.</td></tr>
-              <tr><td class="num">2</td><td>Back Squat</td><td class="setrep">4 × 4–6</td><td>#1 strength/jump driver. Heavy, fast concentric, never to failure.</td></tr>
-              <tr><td class="num">3</td><td>Trap-Bar Jump</td><td class="setrep">4 × 3</td><td>Max bar speed. Main power expression.</td></tr>
-              <tr><td class="num">4</td><td>Hang Clean (technical reintro)</td><td class="setrep">3 × 3</td><td>Light, rebuild pattern. Skip if form/knee off — trap-bar jump covers it.</td></tr>
-              <tr><td class="num">5</td><td>Romanian Deadlift</td><td class="setrep">3 × 8–10</td><td>Posterior chain, loaded stretch</td></tr>
-              <tr><td class="num">6</td><td>Standing Calf + Tib Raise</td><td class="setrep">3 × 12–15</td><td>Ankle stiffness = force transfer</td></tr>
-              <tr><td class="num">7</td><td>Pallof Press</td><td class="setrep">3 × 10/side</td><td>Trunk anti-rotation</td></tr>
+              <tr><td class="num">2</td><td>Acceleration Sprints</td><td class="setrep">4–6 × 10–20m</td><td>Full rest (~1 min/10m). ≥95% quality; stop when times drop. First-step + approach driver.</td></tr>
+              <tr><td class="num">3</td><td>Power Clean (or Hang Clean) — LEAD</td><td class="setrep">5×3 → 6×3 → 7×2</td><td>Highest-RFD lift. Heavy but fast, never grind. Rebuild from pulls if rusty.</td></tr>
+              <tr><td class="num">4</td><td>Back Squat</td><td class="setrep">4 × 4–6</td><td>#1 strength/jump driver. Heavy, fast, never to failure.</td></tr>
+              <tr><td class="num">5</td><td>Trap-Bar Jump (optional)</td><td class="setrep">3 × 3</td><td>Lower-skill power expression; keep if cleans feel off.</td></tr>
+              <tr><td class="num">6</td><td>Romanian Deadlift</td><td class="setrep">3 × 8–10</td><td>Posterior chain, loaded stretch</td></tr>
+              <tr><td class="num">7</td><td>Standing Calf + Tib Raise</td><td class="setrep">3 × 12–15</td><td>Ankle stiffness = force transfer</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="day-note">Short but sharp — if 60 min is tight, drop the trap-bar jump and core. Clean + squat + one posterior + calf is the spine.</p>
       </div>
     </details>
 
@@ -811,8 +839,8 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
       <summary aria-expanded="false">
         <span class="day-glyph" aria-hidden="true">FRI</span>
         <span>
-          <span class="day-title">Legs</span>
-          <span class="day-sub" style="display:block">Single-leg lead + posterior · warm-up: knee ISO + stability</span>
+          <span class="day-title">Lower B: Reactive + Posterior + Single-Leg</span>
+          <span class="day-sub" style="display:block">Knee ISO → dynamic prep + sprint drills → light reactive → short sprints → clean-pull → squat → single-leg/posterior → calf</span>
         </span>
         <span class="day-marker" aria-hidden="true"></span>
       </summary>
@@ -823,12 +851,13 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
               <tr><th scope="col">#</th><th scope="col">Exercise</th><th scope="col">Sets × Reps</th><th scope="col">Notes</th></tr>
             </thead>
             <tbody>
-              <tr><td class="num">1</td><td>Bulgarian Split Squat (leads)</td><td class="setrep">3 × 6–8</td><td>Single-leg force + deep loaded stretch</td></tr>
-              <tr><td class="num">2</td><td>Trap-Bar Deadlift (explosive)</td><td class="setrep">3 × 3–5</td><td>Hip-drive power</td></tr>
-              <tr><td class="num">3</td><td>Nordic / Leg Curl</td><td class="setrep">3 × 6–10</td><td>Slow eccentric — hamstring + braking</td></tr>
-              <tr><td class="num">4</td><td>Lateral Lunge / Cossack Squat</td><td class="setrep">3 × 8/side</td><td>Frontal-plane strength for cuts</td></tr>
-              <tr><td class="num">5</td><td>Seated Calf Raise</td><td class="setrep">3 × 12–20</td><td>Soleus</td></tr>
-              <tr><td class="num">6</td><td>Light reactive (optional) + anti-flexion core</td><td class="setrep">knee-gated</td><td>Only if knee pain held ≤3/10 all week</td></tr>
+              <tr><td class="num">1</td><td>Light reactive plyo (knee-gated)</td><td class="setrep">~30–40 contacts</td><td>Pogos, low line/lateral hops. Only if knee ≤3/10 all week.</td></tr>
+              <tr><td class="num">2</td><td>Short Sprints</td><td class="setrep">3–4 × 20–30m</td><td>Slightly longer than Tue, full rest, high quality.</td></tr>
+              <tr><td class="num">3</td><td>Clean Pull / Snatch High Pull — LEAD</td><td class="setrep">5×3 → 6×3 → 7×2</td><td>No catch — rebuilds the pull + violent triple extension.</td></tr>
+              <tr><td class="num">4</td><td>Back Squat (or Front Squat, rotate)</td><td class="setrep">4 × 5</td><td>Second heavy squat exposure of the week.</td></tr>
+              <tr><td class="num">5</td><td>Bulgarian Split Squat</td><td class="setrep">3 × 6–8</td><td>Single-leg force + deep loaded stretch</td></tr>
+              <tr><td class="num">6</td><td>Nordic / Seated Leg Curl</td><td class="setrep">3 × 6–10</td><td>Slow eccentric — hamstring + braking. Seated curl &gt; lying for stretch.</td></tr>
+              <tr><td class="num">7</td><td>Seated Calf + anti-flexion core</td><td class="setrep">3 × 12–20</td><td>Soleus + trunk</td></tr>
             </tbody>
           </table>
         </div>
@@ -837,32 +866,84 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
   </div>
 </section>
 
-<!-- ============ 7. 4-WEEK ARC ============ -->
-<section id="arc">
+<!-- ============ 7. CLEANS — REBUILD LADDER ============ -->
+<section id="cleans">
   <div class="wrap">
-    <div class="sec-head"><span class="sec-num" aria-hidden="true">05</span><h2>4-Week Arc</h2></div>
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">05</span><h2>Cleans — Rebuild Ladder</h2></div>
+    <p class="lede">The power clean produces the highest rate of force development of any lift — higher than the CMJ or jump squat — and clean strength correlates with vertical at ~r=0.75 (bodyweight-adjusted). That's why both lower days now lead with a clean variant, waved. Counter-point: the clean is high-skill and jump squats/trap-bar jumps give similar explosive gains with less risk — so rebuild from low-skill pulls, don't grind it, keep the trap-bar jump as a fallback.</p>
+
+    <div class="ladderwrap" role="list" aria-label="Clean progression ladder">
+      <ol class="ladder">
+        <li class="rung">Clean Pull</li>
+        <li class="rung">Snatch/Clean High Pull</li>
+        <li class="rung">Hang Power Clean</li>
+        <li class="rung">Power Clean</li>
+        <li class="rung">Full Clean</li>
+      </ol>
+    </div>
+
+    <div class="callout">
+      <span class="tag">Rung-Up Rule</span>
+      <p>Advance only when the current variant is fast, clean, and pain-free.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. SPEED & SPRINT WORK ============ -->
+<section id="sprints">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">06</span><h2>Speed &amp; Sprint Work</h2></div>
+    <p class="lede">Sprinting is the highest-RFD, most elastic ground contact there is; it builds the horizontal force behind your first step and the run-up to a two-foot dunk, and approach speed directly raises the two-foot jump. It's also knee-friendlier than heavy depth jumps — a smart reactive stimulus during this tendon-building block.</p>
+
     <div class="tablewrap">
       <table>
-        <caption>RIR / contacts arc</caption>
+        <caption>Sprint dose — Tue &amp; Fri</caption>
         <thead>
-          <tr><th scope="col">Week</th><th scope="col">Compounds</th><th scope="col">Isolations</th><th scope="col">Jump Contacts</th><th scope="col">Intent</th></tr>
+          <tr><th scope="col">Element</th><th scope="col">Tue (accel)</th><th scope="col">Fri (toward speed)</th><th scope="col">Rule</th></tr>
         </thead>
         <tbody>
-          <tr><th scope="row" class="num">1</th><td class="num">3–4 RIR</td><td class="num">1–2 RIR</td><td>~40–50 (landings)</td><td>Groove pattern, rebuild strength</td></tr>
-          <tr><th scope="row" class="num">2</th><td class="num">2–3 RIR</td><td class="num">1–2 RIR</td><td>~50–60 (add low box)</td><td>Add load / reps</td></tr>
-          <tr><th scope="row" class="num">3</th><td class="num">0–1 RIR (PR attempt)</td><td>last set to failure</td><td>~60 (crisp only)</td><td>Peak strength stimulus</td></tr>
-          <tr><th scope="row" class="num">4</th><td class="num">4–5 RIR (−40–50%)</td><td class="num">3–4 RIR</td><td>~30 + TEST</td><td>Deload, shed fatigue, retest</td></tr>
+          <tr><th scope="row">Distance</th><td class="num">10–20m</td><td class="num">20–30m</td><td>Speed development, not conditioning</td></tr>
+          <tr><th scope="row">Volume</th><td class="num">4–6 reps</td><td class="num">3–4 reps</td><td>Keep total low; quality over accumulation</td></tr>
+          <tr><th scope="row">Rest</th><td class="num">~1 min/10m</td><td class="num">full</td><td>Never rushed</td></tr>
+          <tr><th scope="row">Quality</th><td class="num">≥95%</td><td class="num">≥95%</td><td>Stop when times drop ~3–5%</td></tr>
+          <tr><th scope="row">Drills (warm-up)</th><td>A/B skips, bounds, carioca, high knees</td><td>same</td><td>Low-CNS primer, most days</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="smallnote" style="margin-top:14px">Placed first, on fresh legs. Conditioning "suicides" are separate (done tired) and don't count as speed work — keep them out of Block 1.</p>
+  </div>
+</section>
+
+<!-- ============ 9. 4-WEEK ARC ============ -->
+<section id="arc">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">07</span><h2>4-Week Arc</h2></div>
+    <div class="tablewrap">
+      <table>
+        <caption>RIR / clean / sprint arc</caption>
+        <thead>
+          <tr><th scope="col">Week</th><th scope="col">Squat/compounds</th><th scope="col">Clean (lead)</th><th scope="col">Isolations</th><th scope="col">Jump contacts</th><th scope="col">Sprint</th><th scope="col">Intent</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row" class="num">1</th><td class="num">3–4 RIR</td><td class="num">5×3 moderate+fast</td><td class="num">1–2 RIR</td><td>~40–50</td><td>technique ~90%</td><td>Groove, rebuild</td></tr>
+          <tr><th scope="row" class="num">2</th><td class="num">2–3 RIR</td><td class="num">6×3 +load, fast</td><td class="num">1–2 RIR</td><td>~50–60</td><td>~95%, +rep</td><td>Add load</td></tr>
+          <tr><th scope="row" class="num">3</th><td class="num">0–1 RIR (PR)</td><td class="num">7×2 heaviest/crisp</td><td>last set to failure</td><td>~60 crisp</td><td>max intent</td><td>Peak</td></tr>
+          <tr><th scope="row" class="num">4</th><td class="num">4–5 RIR (−40–50%)</td><td class="num">3×2 light</td><td class="num">3–4 RIR</td><td>~30 + TEST</td><td>sharpness only</td><td>Deload + retest</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="signal" role="note">
+      <span class="tag">Two Engines, One Rule</span>
+      <p>Barbell strength/hypertrophy progresses on load &amp; reps; cleans, sprints, and plyos progress on <strong>speed &amp; quality</strong> — gated by clean reps and silent landings. Never push the explosive work with lift-aggressiveness — that's how a tendon flares.</p>
+    </div>
+    <div class="signal" role="note">
       <span class="tag">Failure Rule</span>
-      <p>Compounds <strong>NEVER</strong> to failure (more fatigue, no extra growth); isolations' last set to technical failure.</p>
+      <p>Compounds <strong>never</strong> to failure; isolations' last set to technical failure; cleans/sprints <strong>never to fatigue</strong> — stop when speed drops.</p>
     </div>
     <div class="signal" role="note">
       <span class="tag">Knee Gate</span>
-      <p>Only add jump intensity next week if pain stayed <strong>≤3/10</strong> and landings were silent. The lift can keep progressing even if the jump has to hold.</p>
+      <p>Add jump/sprint intensity next week only if pain stayed <strong>≤3/10</strong> and landings were silent.</p>
     </div>
 
     <div class="tablewrap">
@@ -872,6 +953,7 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
           <tr><th scope="col">Lift</th><th scope="col">W1</th><th scope="col">W2</th><th scope="col">W3 (Peak)</th><th scope="col">W4</th></tr>
         </thead>
         <tbody>
+          <tr><th scope="row">Power Clean / Pull</th><td class="num">find a fast 3</td><td class="num">+5–10 lb</td><td class="num">heaviest crisp 2</td><td class="num">light</td></tr>
           <tr><th scope="row">Back Squat</th><td class="num">~205 × 5</td><td class="num">~215 × 5</td><td class="num">~225 × 5 / PR</td><td class="num">135 × 5</td></tr>
           <tr><th scope="row">Incline BB Press</th><td class="num">~135 × 8</td><td class="num">~140 × 8</td><td class="num">~150 × 6–8 / PR</td><td class="num">95 × 8</td></tr>
           <tr><th scope="row">Barbell Row</th><td class="num">~155 × 8</td><td class="num">~160 × 8</td><td class="num">~170 × 6–8</td><td class="num">105 × 8</td></tr>
@@ -880,13 +962,14 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
         </tbody>
       </table>
     </div>
+    <p class="smallnote" style="margin-top:14px">Your ~270 squat at 185 lb is ~1.45× bodyweight. Strength→jump transfer is strongest below ~2× BW, so getting stronger still pays off big on your vertical — chase the squat toward ~2× BW (~370) over the coming blocks. Past 2× BW, tip the emphasis toward power/reactive.</p>
   </div>
 </section>
 
 <!-- ============ 8. HOW TO PROGRESS ============ -->
 <section id="progress">
   <div class="wrap">
-    <div class="sec-head"><span class="sec-num" aria-hidden="true">06</span><h2>How to Progress</h2></div>
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">08</span><h2>How to Progress</h2></div>
     <p class="lede">Two separate progression engines run at once — never let the jump engine borrow the aggressiveness of the lift engine.</p>
 
     <div class="engines">
@@ -929,7 +1012,7 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
 <!-- ============ 9. RECOVERY & STRETCHING ============ -->
 <section id="recovery">
   <div class="wrap">
-    <div class="sec-head"><span class="sec-num" aria-hidden="true">07</span><h2>Recovery &amp; Stretching</h2></div>
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">09</span><h2>Recovery &amp; Stretching</h2></div>
 
     <div class="two-rules">
       <div class="callout">
@@ -1012,7 +1095,7 @@ body { margin: 0; padding: 0; background: #0a0a0a; }
 <!-- ============ 10. WEEK 4 DELOAD / RETEST ============ -->
 <section id="deload">
   <div class="wrap">
-    <div class="sec-head"><span class="sec-num" aria-hidden="true">08</span><h2>Week 4 — Deload &amp; Retest</h2></div>
+    <div class="sec-head"><span class="sec-num" aria-hidden="true">10</span><h2>Week 4 — Deload &amp; Retest</h2></div>
     <p class="lede">Checklist. State is in-memory only — it resets on reload.</p>
     <p class="check-counter" id="check-counter" aria-live="polite">00 / 06</p>
     <ul class="checklist" id="checklist">
